@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft, Zap, CheckCircle2 } from 'lucide-react';
 import s from '../styles/page.module.css';
@@ -39,7 +39,7 @@ export function ForgotPasswordPage() {
         boxSizing: 'border-box',
       }}
     >
-      {/* 100% Video Background - Plays exactly once without repeating */}
+      {/* 100% Video Background */}
       <video
         src="/Login-Video.mp4"
         autoPlay
@@ -69,7 +69,7 @@ export function ForgotPasswordPage() {
           padding: '8px 18px',
           background: 'rgba(15, 23, 42, 0.96)',
           backdropFilter: 'blur(16px)',
-          border: '1.5px solid #f97316',
+          border: '1.5px solid var(--color-accent)',
           borderRadius: 999,
           color: '#ffffff',
           fontSize: 12,
@@ -77,21 +77,21 @@ export function ForgotPasswordPage() {
           display: 'flex',
           alignItems: 'center',
           gap: 7,
-          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.9), 0 0 15px rgba(249, 115, 22, 0.5)',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.9), 0 0 15px rgba(0, 184, 230, 0.4)',
         }}
       >
-        <Zap size={15} color="#f97316" />
+        <Zap size={15} color="var(--color-accent)" />
         <span>PIP Utility Engine • V2.0 Enterprise</span>
       </div>
 
-      {/* Right-Aligned Spacious Form Container */}
+      {/* Transparent Form Container (Shifted Left & Balanced Width) */}
       <div
         style={{
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          maxWidth: 'min(480px, 92vw)',
-          marginRight: 'max(7vw, 30px)',
+          maxWidth: 'min(420px, 92vw)',
+          marginRight: 'max(13vw, 60px)',
           padding: 0,
           background: 'transparent',
           color: '#ffffff',
@@ -101,32 +101,45 @@ export function ForgotPasswordPage() {
         }}
       >
         {/* Back Link */}
-        <div style={{ marginBottom: 18 }}>
+        <div style={{ marginBottom: 16 }}>
           <Link
             to="/login"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              color: '#f97316',
-              fontSize: 13.5,
+              color: '#38CDF4',
+              fontSize: 12.5,
               fontWeight: 700,
               textDecoration: 'none',
-              textShadow: '0 2px 6px rgba(0,0,0,0.9)',
+              padding: '4px 10px',
+              borderRadius: 8,
+              background: 'rgba(8, 182, 232, 0.12)',
+              border: '1px solid rgba(8, 182, 232, 0.28)',
+              transition: 'all 0.2s ease',
+              textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(8, 182, 232, 0.28)';
+              e.currentTarget.style.color = '#ffffff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(8, 182, 232, 0.12)';
+              e.currentTarget.style.color = '#38CDF4';
             }}
           >
-            <ArrowLeft size={16} /> Back to Sign In
+            <ArrowLeft size={14} /> Back to Sign In
           </Link>
         </div>
 
         {/* Title */}
-        <div style={{ marginBottom: 28 }}>
+        <div style={{ marginBottom: 20 }}>
           <h2
             style={{
-              fontSize: 'clamp(1.8rem, 2.5vw, 2.4rem)',
+              fontSize: 'clamp(1.6rem, 2.2vw, 2rem)',
               fontWeight: 700,
               color: '#ffffff',
-              margin: '0 0 8px',
+              margin: '0 0 5px',
               letterSpacing: '-0.03em',
               textShadow: '0 2px 12px rgba(0,0,0,0.95)',
             }}
@@ -135,7 +148,7 @@ export function ForgotPasswordPage() {
           </h2>
           <p
             style={{
-              fontSize: 'clamp(13.5px, 1.1vw, 15px)',
+              fontSize: '13.5px',
               color: '#f1f5f9',
               margin: 0,
               textShadow: '0 2px 10px rgba(0,0,0,0.95)',
@@ -148,36 +161,38 @@ export function ForgotPasswordPage() {
         {isSubmitted ? (
           <div
             style={{
-              background: 'rgba(16, 185, 129, 0.25)',
+              background: 'rgba(16, 185, 129, 0.2)',
               border: '1.5px solid #10b981',
-              borderRadius: 14,
-              padding: '20px',
+              borderRadius: 12,
+              padding: '18px 20px',
               backdropFilter: 'blur(12px)',
               color: '#ffffff',
               boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, color: '#34d399', fontWeight: 700, fontSize: 16 }}>
-              <CheckCircle2 size={20} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: '#34d399', fontWeight: 700, fontSize: 15 }}>
+              <CheckCircle2 size={18} />
               <span>Recovery Link Dispatched</span>
             </div>
-            <p style={{ margin: 0, fontSize: 13.5, color: '#e2e8f0', lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: 13, color: '#e2e8f0', lineHeight: 1.5 }}>
               If an active organization account matches <strong>{email}</strong>, a secure password reset link has been dispatched to your inbox.
             </p>
-            <div style={{ marginTop: 18 }}>
+            <div style={{ marginTop: 16 }}>
               <Link
                 to="/login"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
-                  padding: '10px 20px',
-                  borderRadius: 10,
-                  background: '#10b981',
+                  padding: '8px 18px',
+                  borderRadius: 8,
+                  background: 'var(--grad-cyan-button)',
+                  border: '1px solid var(--color-accent)',
                   color: '#ffffff',
                   fontWeight: 700,
-                  fontSize: 13.5,
+                  fontSize: 13,
                   textDecoration: 'none',
+                  boxShadow: 'var(--shadow-cyan)',
                 }}
               >
                 Return to Login
@@ -185,16 +200,16 @@ export function ForgotPasswordPage() {
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* Email Field */}
             <div className={s.field}>
               <label
                 className={s.label}
                 style={{
                   color: '#ffffff',
-                  fontSize: 14,
+                  fontSize: 12.5,
                   fontWeight: 600,
-                  marginBottom: 8,
+                  marginBottom: 5,
                   display: 'block',
                   textShadow: '0 2px 8px rgba(0,0,0,0.95)',
                 }}
@@ -203,12 +218,12 @@ export function ForgotPasswordPage() {
               </label>
               <div style={{ position: 'relative' }}>
                 <Mail
-                  size={20}
+                  size={16}
                   style={{
                     position: 'absolute',
-                    left: 16,
-                    top: 16,
-                    color: focusedField === 'email' ? '#f97316' : '#ffffff',
+                    left: 14,
+                    top: 14,
+                    color: focusedField === 'email' ? 'var(--color-accent)' : '#ffffff',
                     transition: 'color 0.3s ease',
                   }}
                 />
@@ -218,16 +233,16 @@ export function ForgotPasswordPage() {
                   onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
                   style={{
-                    paddingLeft: 50,
-                    height: 52,
-                    fontSize: 15,
+                    paddingLeft: 42,
+                    height: 44,
+                    fontSize: 13.5,
                     fontWeight: 500,
                     background: focusedField === 'email' ? 'rgba(15, 23, 42, 0.88)' : 'rgba(15, 23, 42, 0.65)',
-                    border: focusedField === 'email' ? '2px solid #f97316' : '1.5px solid rgba(255, 255, 255, 0.45)',
+                    border: focusedField === 'email' ? '1.5px solid var(--color-accent)' : '1px solid rgba(255, 255, 255, 0.45)',
                     color: '#ffffff',
-                    borderRadius: 14,
-                    boxShadow: focusedField === 'email' ? '0 0 20px rgba(249, 115, 22, 0.45)' : '0 4px 14px rgba(0,0,0,0.4)',
-                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    borderRadius: 9,
+                    boxShadow: focusedField === 'email' ? '0 0 16px rgba(0, 184, 230, 0.4)' : '0 3px 10px rgba(0,0,0,0.3)',
+                    transition: 'all 0.2s ease',
                     outline: 'none',
                   }}
                   placeholder="name@organization.com"
@@ -237,7 +252,7 @@ export function ForgotPasswordPage() {
                 />
               </div>
               {error && (
-                <span className={s.fieldError} style={{ color: '#fca5a5', fontSize: 12.5, marginTop: 5, display: 'block', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+                <span className={s.fieldError} style={{ color: '#fca5a5', fontSize: 11.5, marginTop: 3, display: 'block', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
                   {error}
                 </span>
               )}
@@ -249,16 +264,16 @@ export function ForgotPasswordPage() {
               className={`${s.btn} ${s.btnPrimary}`}
               style={{
                 width: '100%',
-                height: 52,
-                fontSize: 16,
+                height: 44,
+                fontSize: 14,
                 fontWeight: 700,
                 justifyContent: 'center',
-                marginTop: 6,
-                background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
-                borderColor: '#f97316',
-                boxShadow: '0 8px 25px rgba(249, 115, 22, 0.55)',
-                borderRadius: 14,
-                transition: 'all 0.3s ease',
+                marginTop: 4,
+                background: 'var(--grad-cyan-button)',
+                borderColor: 'var(--color-accent)',
+                boxShadow: 'var(--shadow-cyan)',
+                borderRadius: 9,
+                transition: 'all 0.2s ease',
                 cursor: 'pointer',
                 color: '#ffffff',
               }}
@@ -273,8 +288,8 @@ export function ForgotPasswordPage() {
         <div
           style={{
             textAlign: 'center',
-            marginTop: 24,
-            fontSize: 12,
+            marginTop: 22,
+            fontSize: 11.5,
             color: '#ffffff',
             fontWeight: 500,
             opacity: 0.95,

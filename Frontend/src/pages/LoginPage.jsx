@@ -101,14 +101,14 @@ export function LoginPage() {
         <span>PIP Utility Engine • V2.0 Enterprise</span>
       </div>
 
-      {/* Transparent Spacious Form */}
+      {/* Transparent Form Container (Shifted Left & Balanced Width) */}
       <div
         style={{
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          maxWidth: 'min(480px, 92vw)',
-          marginRight: 'max(7vw, 30px)',
+          maxWidth: 'min(420px, 92vw)',
+          marginRight: 'max(13vw, 60px)',
           padding: 0,
           background: 'transparent',
           color: '#ffffff',
@@ -118,38 +118,38 @@ export function LoginPage() {
         }}
       >
         {/* High-Res Extracted Logo & Typography */}
-        <div style={{ marginBottom: 24, display: 'inline-flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ marginBottom: 20, display: 'inline-flex', alignItems: 'center', gap: 12 }}>
           <img
             src="/pip-icon.png"
             alt="PIP"
             style={{
-              height: 52,
+              height: 46,
               width: 'auto',
-              maxHeight: 52,
+              maxHeight: 46,
               objectFit: 'contain',
               display: 'block',
-              filter: 'drop-shadow(0 4px 16px rgba(8, 182, 232, 0.5))',
+              filter: 'drop-shadow(0 4px 14px rgba(8, 182, 232, 0.5))',
             }}
             onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/Logo-cropped.png'; }}
           />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', lineHeight: 1.1, textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
-              PIP <span style={{ fontSize: 13, color: '#38CDF4', fontWeight: 800, background: 'rgba(8,182,232,0.2)', border: '1px solid rgba(8,182,232,0.4)', padding: '1px 6px', borderRadius: 4 }}>V2.0</span>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', lineHeight: 1.1, textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
+              PIP <span style={{ fontSize: 12, color: '#38CDF4', fontWeight: 800, background: 'rgba(8,182,232,0.2)', border: '1px solid rgba(8,182,232,0.4)', padding: '1px 6px', borderRadius: 4 }}>V2.0</span>
             </div>
-            <span style={{ fontSize: 11.5, fontWeight: 700, color: '#38CDF4', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 3 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#38CDF4', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>
               Power Intelligence Platform
             </span>
           </div>
         </div>
 
         {/* Form Title */}
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 20 }}>
           <h2
             style={{
-              fontSize: 'clamp(1.8rem, 2.5vw, 2.3rem)',
+              fontSize: 'clamp(1.6rem, 2.2vw, 2rem)',
               fontWeight: 700,
               color: '#ffffff',
-              margin: '0 0 6px',
+              margin: '0 0 5px',
               letterSpacing: '-0.03em',
               textShadow: '0 2px 12px rgba(0,0,0,0.95)',
             }}
@@ -158,7 +158,7 @@ export function LoginPage() {
           </h2>
           <p
             style={{
-              fontSize: 'clamp(13px, 1vw, 15px)',
+              fontSize: '13.5px',
               color: '#f1f5f9',
               margin: 0,
               textShadow: '0 2px 10px rgba(0,0,0,0.95)',
@@ -172,13 +172,13 @@ export function LoginPage() {
           <div
             className={`${s.alert} ${s.alertDanger}`}
             style={{
-              marginBottom: 18,
-              background: 'rgba(239, 68, 68, 0.6)',
+              marginBottom: 16,
+              background: 'rgba(239, 68, 68, 0.65)',
               borderColor: 'rgba(239, 68, 68, 0.9)',
               color: '#ffffff',
-              fontSize: 13.5,
-              borderRadius: 12,
-              padding: '12px 16px',
+              fontSize: 13,
+              borderRadius: 8,
+              padding: '10px 14px',
               boxShadow: '0 4px 14px rgba(0,0,0,0.5)',
             }}
           >
@@ -186,7 +186,7 @@ export function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Email Field */}
           <div className={s.field}>
             <label
@@ -208,7 +208,7 @@ export function LoginPage() {
                 style={{
                   position: 'absolute',
                   left: 14,
-                  top: 13,
+                  top: 14,
                   color: focusedField === 'email' ? 'var(--color-accent)' : '#ffffff',
                   transition: 'color 0.3s ease',
                 }}
@@ -220,15 +220,15 @@ export function LoginPage() {
                 onBlur={() => setFocusedField(null)}
                 style={{
                   paddingLeft: 42,
-                  height: 42,
+                  height: 44,
                   fontSize: 13.5,
                   fontWeight: 500,
                   background: focusedField === 'email' ? 'rgba(15, 23, 42, 0.88)' : 'rgba(15, 23, 42, 0.65)',
-                  border: focusedField === 'email' ? '2px solid var(--color-accent)' : '1.5px solid rgba(255, 255, 255, 0.45)',
+                  border: focusedField === 'email' ? '1.5px solid var(--color-accent)' : '1px solid rgba(255, 255, 255, 0.45)',
                   color: '#ffffff',
                   borderRadius: 9,
                   boxShadow: focusedField === 'email' ? '0 0 16px rgba(0, 184, 230, 0.4)' : '0 3px 10px rgba(0,0,0,0.3)',
-                  transition: 'all 0.25s ease',
+                  transition: 'all 0.2s ease',
                   outline: 'none',
                 }}
                 placeholder="name@organization.com"
@@ -256,11 +256,31 @@ export function LoginPage() {
               <Link
                 to="/forgot-password"
                 style={{
-                  fontSize: 12,
-                  color: 'var(--color-accent)',
-                  fontWeight: 700,
+                  fontSize: 11.5,
+                  color: '#38CDF4',
+                  fontWeight: 600,
                   textDecoration: 'none',
-                  textShadow: '0 1px 6px rgba(0,0,0,0.95)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  padding: '2px 8px',
+                  borderRadius: 6,
+                  background: 'rgba(8, 182, 232, 0.12)',
+                  border: '1px solid rgba(8, 182, 232, 0.3)',
+                  transition: 'all 0.2s ease',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(8, 182, 232, 0.28)';
+                  e.currentTarget.style.borderColor = '#38CDF4';
+                  e.currentTarget.style.color = '#ffffff';
+                  e.currentTarget.style.boxShadow = '0 0 10px rgba(0, 184, 230, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(8, 182, 232, 0.12)';
+                  e.currentTarget.style.borderColor = 'rgba(8, 182, 232, 0.3)';
+                  e.currentTarget.style.color = '#38CDF4';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
                 Forgot password?
@@ -272,7 +292,7 @@ export function LoginPage() {
                 style={{
                   position: 'absolute',
                   left: 14,
-                  top: 13,
+                  top: 14,
                   color: focusedField === 'password' ? 'var(--color-accent)' : '#ffffff',
                   transition: 'color 0.3s ease',
                 }}
@@ -285,15 +305,15 @@ export function LoginPage() {
                 style={{
                   paddingLeft: 42,
                   paddingRight: 42,
-                  height: 42,
+                  height: 44,
                   fontSize: 13.5,
                   fontWeight: 500,
                   background: focusedField === 'password' ? 'rgba(15, 23, 42, 0.88)' : 'rgba(15, 23, 42, 0.65)',
-                  border: focusedField === 'password' ? '2px solid var(--color-accent)' : '1.5px solid rgba(255, 255, 255, 0.45)',
+                  border: focusedField === 'password' ? '1.5px solid var(--color-accent)' : '1px solid rgba(255, 255, 255, 0.45)',
                   color: '#ffffff',
                   borderRadius: 9,
                   boxShadow: focusedField === 'password' ? '0 0 16px rgba(0, 184, 230, 0.4)' : '0 3px 10px rgba(0,0,0,0.3)',
-                  transition: 'all 0.25s ease',
+                  transition: 'all 0.2s ease',
                   outline: 'none',
                 }}
                 placeholder="••••••••"
@@ -307,7 +327,7 @@ export function LoginPage() {
                 style={{
                   position: 'absolute',
                   right: 14,
-                  top: 13,
+                  top: 14,
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
@@ -331,7 +351,7 @@ export function LoginPage() {
             className={`${s.btn} ${s.btnPrimary}`}
             style={{
               width: '100%',
-              height: 42,
+              height: 44,
               fontSize: 14,
               fontWeight: 700,
               justifyContent: 'center',
@@ -340,7 +360,7 @@ export function LoginPage() {
               borderColor: 'var(--color-accent)',
               boxShadow: 'var(--shadow-cyan)',
               borderRadius: 9,
-              transition: 'all 0.25s ease',
+              transition: 'all 0.2s ease',
               cursor: 'pointer',
               color: '#ffffff',
             }}
