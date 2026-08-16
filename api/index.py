@@ -17,14 +17,24 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Session
 from sqlalchemy.pool import StaticPool
 
-# ── 1. Database Setup (Cloud DB via DATABASE_URL or SQLite Storage) ────────────
-DATABASE_URL = os.environ.get("DATABASE_URL")
-if not DATABASE_URL:
+# ── 1. Database Setup (Auto-Detect Vercel/Prisma Postgres or SQLite Storage) ────
+raw_db_url = (
+    os.environ.get("POSTGRES_URL_NON_POOLING")
+    or os.environ.get("DIRECT_URL")
+    or os.environ.get("POSTGRES_URL")
+    or os.environ.get("DATABASE_URL")
+    or os.environ.get("POSTGRES_PRISMA_URL")
+)
+
+if raw_db_url:
+    DATABASE_URL = raw_db_url
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    elif DATABASE_URL.startswith("prisma+postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("prisma+postgres://", "postgresql://", 1)
+else:
     tmp_db = Path(tempfile.gettempdir()) / "pip_saas_cloud.db"
     DATABASE_URL = f"sqlite:///{tmp_db.as_posix()}"
-
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 if "sqlite" in DATABASE_URL:
     engine = create_engine(

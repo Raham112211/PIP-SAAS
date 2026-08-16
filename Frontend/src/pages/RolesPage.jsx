@@ -86,10 +86,6 @@ export function RolesPage() {
 
   useEffect(() => {
     loadData(true);
-    const interval = setInterval(() => {
-      loadData(false);
-    }, 3500);
-    return () => clearInterval(interval);
   }, []);
 
   const handleSelectRole = (role) => {
