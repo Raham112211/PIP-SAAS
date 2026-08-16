@@ -1,6 +1,7 @@
-﻿import { createContext, useCallback, useContext, useMemo, useState, useEffect } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initDatabase, dbSelectOne, dbRun } from '../db/database';
+import { userService } from '../services/userService';
 
 const TOKEN_KEY = 'pip_auth_token';
 const USER_KEY  = 'pip_auth_user';
@@ -27,11 +28,17 @@ function getStoredUser() {
 function setStoredAuth(token, user) {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
+  localStorage.setItem('user_id', user.id);
+  localStorage.setItem('org_id', user.organization_id || user.organizationId || 'org-1001');
+  localStorage.setItem('user_role', user.role || 'company_admin');
 }
 
 function clearStoredAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem('user_id');
+  localStorage.removeItem('org_id');
+  localStorage.removeItem('user_role');
 }
 
 export function AuthProvider({ children }) {
