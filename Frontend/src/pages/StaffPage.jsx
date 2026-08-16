@@ -110,7 +110,7 @@ export function StaffPage() {
       setRolesList(Array.isArray(remoteRoles) ? remoteRoles : []);
       setBranchesList(branchRows || []);
     } catch (err) {
-      showToast(`Notice: ${err.message}`, false);
+      // Background sync fallback
     } finally {
       setLoading(false);
     }
@@ -118,6 +118,11 @@ export function StaffPage() {
 
   useEffect(() => {
     loadData(true);
+    // Real-time multi-device sync interval (auto-refreshes every 3.5 seconds across all open laptops/tabs)
+    const interval = setInterval(() => {
+      loadData(false);
+    }, 3500);
+    return () => clearInterval(interval);
   }, []);
 
   const filteredStaff = staffList.filter((item) => {
@@ -188,8 +193,9 @@ export function StaffPage() {
           designation: form.department.trim() || 'Staff',
         };
 
+        let createdRemote = null;
         try {
-          await userService.createStaff(payload);
+          createdRemote = await userService.createStaff(payload);
         } catch (apiErr) {
           if (apiErr.message && apiErr.message.toLowerCase().includes('already exists')) {
             setErrors({ email: 'A user with this email address already exists.' });
@@ -199,7 +205,25 @@ export function StaffPage() {
           }
         }
 
-        const newId = `usr-${Date.now()}`;
+        const newId = createdRemote?.id || `usr-${Date.now()}`;
+        const newStaffItem = {
+          id: newId,
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          role: form.role || 'Staff',
+          role_id: form.role_id || '',
+          branch_id: form.branch_id || '',
+          branchName: form.branchName || 'Main Office',
+          department: form.department.trim() || 'Operations',
+          status: 'active',
+          isActive: true,
+          createdAt: 'Just now',
+        };
+
+        // Optimistically add to state without losing previous items
+        setStaffList((prev) => [newStaffItem, ...prev.filter((s) => s.id !== newId && s.email !== form.email.trim())]);
+
         await dbRun(
           `INSERT OR REPLACE INTO users (id, email, name, organizationName, phone, role, password) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [newId, form.email.trim(), form.name.trim(), form.branchName || 'Main Office', form.phone.trim(), form.role || 'Staff', 'demo123']
@@ -223,6 +247,22 @@ export function StaffPage() {
         } catch (apiErr) {
           console.warn('API update fallback:', apiErr.message);
         }
+
+        setStaffList((prev) =>
+          prev.map((s) =>
+            s.id === selectedStaff.id
+              ? {
+                  ...s,
+                  name: form.name.trim(),
+                  phone: form.phone.trim(),
+                  role: form.role || s.role,
+                  branchName: form.branchName || s.branchName,
+                  department: form.department.trim(),
+                  status: form.status,
+                }
+              : s
+          )
+        );
 
         await dbRun(
           `UPDATE users SET name = ?, phone = ?, role = ? WHERE id = ? OR email = ?`,

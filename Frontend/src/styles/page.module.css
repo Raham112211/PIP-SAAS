@@ -640,3 +640,102 @@
   gap: 14px;
   color: var(--color-text-muted);
 }
+
+/* ── Comprehensive Dynamic Responsive System ──────────────────────── */
+@media (max-width: 1024px) {
+  .page {
+    padding: 14px 18px 22px;
+  }
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 12px 14px 20px;
+    gap: 10px;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .pageHeader > button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tableToolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .searchWrap {
+    max-width: 100% !important;
+    width: 100%;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .modal {
+    max-width: 95vw;
+    margin: 8px;
+    border-radius: 14px;
+  }
+
+  .modalHeader, .modalBody, .modalFooter {
+    padding: 14px 16px;
+  }
+
+  .tablePagination {
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .authFormContainer {
+    margin-right: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 20px 16px !important;
+    max-width: 94vw !important;
+  }
+
+  .authFormContainer form {
+    width: 100% !important;
+    text-align: left !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageTitle {
+    font-size: 1.3rem;
+  }
+  .statCard {
+    padding: 12px 14px;
+  }
+  .modalFooter {
+    flex-direction: column;
+  }
+  .modalFooter > button {
+    width: 100%;
+    justify-content: center;
+  }
+}

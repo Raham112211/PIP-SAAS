@@ -87,6 +87,11 @@ export function RolesPage() {
 
   useEffect(() => {
     loadData(true);
+    // Real-time multi-device sync interval (auto-refreshes every 3.5 seconds across all open laptops/tabs)
+    const interval = setInterval(() => {
+      loadData(false);
+    }, 3500);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSelectRole = (role) => {
@@ -180,17 +185,27 @@ export function RolesPage() {
           permission_ids: [],
         });
 
+        if (createdRole && createdRole.id) {
+          setRolesList((prev) => [...prev.filter((r) => r.id !== createdRole.id), createdRole]);
+          setSelectedRole(createdRole);
+        }
+
         showToast(`Role "${form.name}" created successfully!`);
         setModal(null);
         await loadData(false);
-        if (createdRole && createdRole.id) {
-          setSelectedRole(createdRole);
-        }
       } else if (modal === 'edit' && selectedRole) {
         await userService.updateRole(selectedRole.id, {
           name: form.name.trim(),
           description: form.description.trim(),
         });
+
+        setRolesList((prev) =>
+          prev.map((r) =>
+            r.id === selectedRole.id
+              ? { ...r, name: form.name.trim(), description: form.description.trim() }
+              : r
+          )
+        );
 
         showToast(`Role details updated!`);
         setModal(null);

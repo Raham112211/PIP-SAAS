@@ -86,6 +86,7 @@ export function ForgotPasswordPage() {
 
       {/* Transparent Form Container (Shifted Left & Balanced Width) */}
       <div
+        className={s.authFormContainer}
         style={{
           position: 'relative',
           zIndex: 10,
