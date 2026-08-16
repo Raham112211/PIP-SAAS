@@ -1,4 +1,5 @@
-﻿from contextlib import asynccontextmanager
+import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -18,19 +19,26 @@ from app.Roles_and_Permissions.permission_routes import router as permission_rou
 from app.core.ws_routes import router as ws_router
 
 
+def init_database_schema():
+    try:
+        Base.metadata.create_all(bind=engine)
+        db = SessionLocal()
+        try:
+            PermissionRepository.seed_default_permissions(db)
+            RoleRepository.seed_default_roles(db)
+        finally:
+            db.close()
+    except Exception as e:
+        print("Database schema initialization warning:", e)
+
+
+# Run immediately on module import for Vercel Serverless cold starts
+init_database_schema()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure database schema exists on startup
-    Base.metadata.create_all(bind=engine)
-    
-    # Seed default system permissions & system roles
-    db = SessionLocal()
-    try:
-        PermissionRepository.seed_default_permissions(db)
-        RoleRepository.seed_default_roles(db)
-    finally:
-        db.close()
-        
+    init_database_schema()
     yield
 
 
@@ -49,13 +57,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include Routers
+# Include Routers (Both root and /api prefixes to handle local + Vercel serverless routing seamlessly)
 app.include_router(staff_router, prefix=settings.API_V1_STR)
 app.include_router(role_router, prefix=settings.API_V1_STR)
 app.include_router(permission_router, prefix=settings.API_V1_STR)
 app.include_router(ws_router)
 
+app.include_router(staff_router, prefix="/api")
+app.include_router(role_router, prefix="/api")
+app.include_router(permission_router, prefix="/api")
+
 
 @app.get("/health", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
 def health_check():
     return {"status": "healthy", "service": settings.PROJECT_NAME}

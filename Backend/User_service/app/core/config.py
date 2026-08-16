@@ -3,9 +3,10 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
-# Dynamically resolve Backend root directory for 100% cross-platform compatibility (Windows + Linux + Docker)
+# Dynamically resolve Backend root directory & Vercel /tmp writeable path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-DEFAULT_DB_PATH = BASE_DIR / "pip_saas.db"
+is_vercel = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+DEFAULT_DB_PATH = Path("/tmp/pip_saas.db") if is_vercel else BASE_DIR / "pip_saas.db"
 DEFAULT_DB_URL = f"sqlite:///{DEFAULT_DB_PATH.as_posix()}"
 
 
