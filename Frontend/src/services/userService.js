@@ -57,8 +57,10 @@ async function request(endpoint, options = {}) {
   }
 
   if (!response.ok) {
+    console.error(`[API Error Details for ${endpoint}]:`, data);
     const errorMsg =
-      (data && typeof data === 'object' && (data.detail || data.message)) ||
+      (data && typeof data === 'object' && (data.detail || data.message || data.error)) ||
+      (typeof data === 'string' && data) ||
       `Request failed with status ${response.status}`;
     throw new Error(errorMsg);
   }
