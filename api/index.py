@@ -19,12 +19,22 @@ from sqlalchemy.pool import StaticPool
 
 # ── 1. Database Setup (Auto-Detect Vercel/Prisma Postgres or SQLite Storage) ────
 raw_db_url = (
-    os.environ.get("POSTGRES_URL_NON_POOLING")
-    or os.environ.get("DIRECT_URL")
+    os.environ.get("DATABASE_URL")
     or os.environ.get("POSTGRES_URL")
-    or os.environ.get("DATABASE_URL")
+    or os.environ.get("STORAGE_URL")
+    or os.environ.get("STORAGE_URL_NON_POOLING")
+    or os.environ.get("POSTGRES_URL_NON_POOLING")
+    or os.environ.get("DIRECT_URL")
     or os.environ.get("POSTGRES_PRISMA_URL")
+    or os.environ.get("STORAGE_PRISMA_URL")
 )
+
+# Search any env var ending with _URL containing postgres
+if not raw_db_url:
+    for k, v in os.environ.items():
+        if ("POSTGRES" in k or "DATABASE" in k or "STORAGE" in k) and isinstance(v, str) and ("postgres" in v or "prisma" in v):
+            raw_db_url = v
+            break
 
 if raw_db_url:
     DATABASE_URL = raw_db_url
