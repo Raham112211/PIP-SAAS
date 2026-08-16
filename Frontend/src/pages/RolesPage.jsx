@@ -3,7 +3,7 @@ import {
   Plus, Shield, Edit2, Trash2, X, Lock, Check, CheckCircle2,
   ShieldCheck, Zap, GitBranch, Users, FileText, Settings, Key,
   AlertCircle, Save, Activity, LayoutDashboard, Building2,
-  Award, BarChart3, SlidersHorizontal, Folder
+  Award, BarChart3, SlidersHorizontal, Folder, Loader2
 } from 'lucide-react';
 import { userService } from '../services/userService';
 import s from '../styles/page.module.css';
@@ -22,89 +22,14 @@ const MODULE_ICONS = {
   licence: Award,
 };
 
-const DEFAULT_MODULE_CATALOG = [
-  {
-    module: 'dashboard',
-    name: 'Dashboard & Analytics',
-    description: 'Executive summaries, real-time KPI metrics, and consumption overview',
-    permissions: [
-      { id: 'perm-dash-view', slug: 'dashboard.view', name: 'View Overview & Analytics', description: 'Access KPI summaries, revenue statistics, and live charts' },
-    ],
-  },
-  {
-    module: 'bills',
-    name: 'Bills & Invoicing',
-    description: 'Utility invoices, PDF statement downloads, ledgers, and billing operations',
-    permissions: [
-      { id: 'perm-bills-view', slug: 'bills.view', name: 'View Consumer Invoices', description: 'Access consumer billing ledger and account summaries' },
-      { id: 'perm-bills-download', slug: 'bills.download', name: 'Download PDF Bills', description: 'Download original PDF billing statements and verified receipts' },
-      { id: 'perm-bills-export', slug: 'bills.export', name: 'Export Billing Data', description: 'Export monthly billing spreadsheets to Excel or CSV' },
-      { id: 'perm-bills-manage', slug: 'bills.manage', name: 'Edit & Process Bills', description: 'Modify billing amounts, record payments, and verify ledger' },
-    ],
-  },
-  {
-    module: 'branches',
-    name: 'Branch Management',
-    description: 'Corporate branch network, node creation, addresses, and office management',
-    permissions: [
-      { id: 'perm-branch-view', slug: 'branches.view', name: 'View Branches', description: 'Browse corporate branch network locations and metrics' },
-      { id: 'perm-branch-create', slug: 'branches.create', name: 'Create Branch', description: 'Register new regional corporate branch offices' },
-      { id: 'perm-branch-edit', slug: 'branches.edit', name: 'Edit Branch Info', description: 'Update branch configuration, address, and manager details' },
-      { id: 'perm-branch-delete', slug: 'branches.delete', name: 'Delete Branch', description: 'Remove inactive branch records and consumer assignments' },
-    ],
-  },
-  {
-    module: 'connections',
-    name: 'Utility Connections & Meters',
-    description: 'Consumer utility meters, DISCO reference accounts, and tariff assignments',
-    permissions: [
-      { id: 'perm-conn-view', slug: 'connections.view', name: 'View Connections', description: 'View consumer meters, reference IDs, and connection details' },
-      { id: 'perm-conn-add', slug: 'connections.add', name: 'Add Connection', description: 'Register new consumer connections and utility meters' },
-      { id: 'perm-conn-edit', slug: 'connections.edit', name: 'Edit Connection', description: 'Update reference numbers, consumer IDs, and tariffs' },
-    ],
-  },
-  {
-    module: 'reports',
-    name: 'Audit & Financial Reports',
-    description: 'Tax compliance audits, analytical spreadsheets, and monthly financial summaries',
-    permissions: [
-      { id: 'perm-reports-view', slug: 'reports.view', name: 'View Reports & Graphs', description: 'Generate audit summaries, consumption graphs, and trends' },
-      { id: 'perm-reports-export', slug: 'reports.export', name: 'Export Audit Reports', description: 'Download comprehensive financial and utility audit spreadsheets' },
-    ],
-  },
-  {
-    module: 'staff',
-    name: 'Staff & Team Directory',
-    description: 'Corporate staff operators, permissions assignments, and profile privileges',
-    permissions: [
-      { id: 'perm-staff-view', slug: 'staff.view', name: 'View Staff Directory', description: 'Browse active corporate staff members and assignees' },
-      { id: 'perm-staff-manage', slug: 'staff.manage', name: 'Manage Staff Profiles', description: 'Create, update profiles, and assign branches or roles to staff' },
-    ],
-  },
-];
-
-const DEFAULT_ROLES = [
-  { id: 'role-1', name: 'Company Admin', slug: 'company_admin', description: 'Full access to organization staff, roles, branches, bills, and settings', is_system: true },
-  { id: 'role-2', name: 'Branch Manager', slug: 'branch_manager', description: 'Manage local staff, connections, and bills for assigned branches', is_system: false },
-  { id: 'role-3', name: 'Billing Operator', slug: 'billing_operator', description: 'Create, edit, verify and print billing statements', is_system: false },
-];
-
-const EMPTY_ROLE_FORM = {
-  name: '',
-  description: '',
-};
-
 export function RolesPage() {
-  const [rolesList, setRolesList] = useState(DEFAULT_ROLES);
-  const [selectedRole, setSelectedRole] = useState(DEFAULT_ROLES[0]);
-  const [moduleCatalog, setModuleCatalog] = useState(DEFAULT_MODULE_CATALOG);
-  const [rolePermissionsMap, setRolePermissionsMap] = useState({
-    'role-1': DEFAULT_MODULE_CATALOG.flatMap((m) => m.permissions.map((p) => p.id)),
-    'role-2': ['perm-dash-view', 'perm-staff-view', 'perm-branch-view', 'perm-bills-view', 'perm-reports-view'],
-    'role-3': ['perm-dash-view', 'perm-bills-view', 'perm-bills-download', 'perm-reports-view'],
-  });
+  const [rolesList, setRolesList] = useState([]);
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [moduleCatalog, setModuleCatalog] = useState([]);
+  const [rolePermissionsMap, setRolePermissionsMap] = useState({});
+  const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
-  const [form, setForm] = useState(EMPTY_ROLE_FORM);
+  const [form, setForm] = useState({ name: '', description: '' });
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -114,29 +39,54 @@ export function RolesPage() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const loadData = async () => {
+  const loadData = async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     try {
       const [remoteRoles, remoteModules] = await Promise.all([
-        userService.getRoles().catch(() => null),
-        userService.getModulePermissions().catch(() => null),
+        userService.getRoles().catch(() => []),
+        userService.getModulePermissions().catch(() => []),
       ]);
 
-      if (Array.isArray(remoteRoles) && remoteRoles.length > 0) {
-        setRolesList(remoteRoles);
-        if (!selectedRole || !remoteRoles.find((r) => r.id === selectedRole.id)) {
-          setSelectedRole(remoteRoles[0]);
-        }
-      }
-      if (Array.isArray(remoteModules) && remoteModules.length > 0) {
-        setModuleCatalog(remoteModules);
+      const roles = Array.isArray(remoteRoles) ? remoteRoles : [];
+      const modules = Array.isArray(remoteModules) ? remoteModules : [];
+
+      setRolesList(roles);
+      setModuleCatalog(modules);
+
+      if (roles.length > 0) {
+        const active = selectedRole && roles.find((r) => r.id === selectedRole.id)
+          ? roles.find((r) => r.id === selectedRole.id)
+          : roles[0];
+        setSelectedRole(active);
+
+        // Fetch real permissions for all roles
+        const permMap = {};
+        await Promise.all(
+          roles.map(async (r) => {
+            if (r.slug === 'company_admin') {
+              // Company admin has all permissions
+              permMap[r.id] = modules.flatMap((m) => m.permissions.map((p) => p.id));
+            } else {
+              try {
+                const rolePerms = await userService.getRolePermissions(r.id);
+                permMap[r.id] = Array.isArray(rolePerms) ? rolePerms.map((p) => p.id) : [];
+              } catch (e) {
+                permMap[r.id] = [];
+              }
+            }
+          })
+        );
+        setRolePermissionsMap(permMap);
       }
     } catch (err) {
-      // Handled seamlessly
+      console.error('Error loading roles data:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
+    loadData(true);
   }, []);
 
   const handleSelectRole = (role) => {
@@ -183,17 +133,17 @@ export function RolesPage() {
 
     setSaving(true);
     try {
-      await userService.updateRolePermissions(selectedRole.id, activePerms).catch(() => {});
+      await userService.updateRolePermissions(selectedRole.id, activePerms);
       showToast(`Permissions updated for role "${selectedRole.name}"!`);
     } catch (err) {
-      showToast(`Permissions updated for role "${selectedRole.name}"!`);
+      showToast(`Error saving: ${err.message}`, true);
     } finally {
       setSaving(false);
     }
   };
 
   const handleOpenCreateModal = () => {
-    setForm(EMPTY_ROLE_FORM);
+    setForm({ name: '', description: '' });
     setErrors({});
     setModal('create');
   };
@@ -224,53 +174,30 @@ export function RolesPage() {
     setSaving(true);
     try {
       if (modal === 'create') {
-        const newRoleId = `role-${Date.now()}`;
-        const newRole = {
-          id: newRoleId,
+        const createdRole = await userService.createRole({
           name: form.name.trim(),
-          slug: form.name.toLowerCase().replace(/\s+/g, '_'),
           description: form.description.trim(),
-          is_system: false,
-        };
+          permission_ids: [],
+        });
 
-        try {
-          await userService.createRole({
-            name: form.name.trim(),
-            description: form.description.trim(),
-            permission_ids: [],
-          });
-        } catch (apiErr) {
-          // Handled locally
+        showToast(`Role "${form.name}" created successfully!`);
+        setModal(null);
+        await loadData(false);
+        if (createdRole && createdRole.id) {
+          setSelectedRole(createdRole);
         }
-
-        setRolesList((prev) => [...prev, newRole]);
-        setSelectedRole(newRole);
-        setRolePermissionsMap((prev) => ({ ...prev, [newRole.id]: [] }));
-        showToast(`Role "${newRole.name}" created successfully!`);
       } else if (modal === 'edit' && selectedRole) {
-        const updatedRole = {
-          ...selectedRole,
+        await userService.updateRole(selectedRole.id, {
           name: form.name.trim(),
           description: form.description.trim(),
-        };
+        });
 
-        try {
-          await userService.updateRole(selectedRole.id, {
-            name: form.name.trim(),
-            description: form.description.trim(),
-          });
-        } catch (apiErr) {
-          // Handled locally
-        }
-
-        setRolesList((prev) => prev.map((r) => (r.id === updatedRole.id ? updatedRole : r)));
-        setSelectedRole(updatedRole);
         showToast(`Role details updated!`);
+        setModal(null);
+        await loadData(false);
       }
-      setModal(null);
     } catch (err) {
-      showToast(`Role updated successfully!`);
-      setModal(null);
+      showToast(`Error: ${err.message}`, true);
     } finally {
       setSaving(false);
     }
@@ -284,15 +211,11 @@ export function RolesPage() {
     if (!window.confirm(`Are you sure you want to remove role "${role.name}"?`)) return;
 
     try {
-      await userService.deleteRole(role.id).catch(() => {});
-      const remaining = rolesList.filter((r) => r.id !== role.id);
-      setRolesList(remaining);
-      if (selectedRole?.id === role.id && remaining.length > 0) {
-        setSelectedRole(remaining[0]);
-      }
+      await userService.deleteRole(role.id);
       showToast(`Role "${role.name}" removed successfully.`);
+      await loadData(false);
     } catch (err) {
-      showToast(`Role removed successfully.`);
+      showToast(`Delete failed: ${err.message}`, true);
     }
   };
 
@@ -336,86 +259,122 @@ export function RolesPage() {
         </button>
       </div>
 
-      {/* 2-Column Responsive Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '28px', alignItems: 'start' }}>
-        {/* Left Column: Roles Sidebar */}
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>
-            DEFINED ROLES ({rolesList.length})
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {rolesList.map((role) => {
-              const isSelected = selectedRole?.id === role.id;
-              return (
-                <div
-                  key={role.id}
-                  onClick={() => handleSelectRole(role)}
-                  style={{
-                    padding: '14px 16px',
-                    borderRadius: '10px',
-                    background: '#ffffff',
-                    border: isSelected ? '1.5px solid #00b8e6' : '1px solid #e2e8f0',
-                    borderLeft: isSelected ? '4px solid #00b8e6' : '1px solid #e2e8f0',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    transition: 'all 0.15s ease',
-                    boxShadow: isSelected ? '0 2px 8px rgba(0, 184, 230, 0.08)' : '0 1px 2px rgba(0,0,0,0.02)',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: '700', fontSize: '13.5px', color: isSelected ? '#0088bb' : '#0f172a' }}>
-                      {role.name}
-                    </div>
-                    <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>
-                      {role.is_system ? 'System Default' : 'Custom Role'}
-                    </div>
-                  </div>
-
-                  {!role.is_system && (
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleOpenEditModal(role); }}
-                        className={s.actionBtn}
-                        style={{ width: '26px', height: '26px' }}
-                      >
-                        <Edit2 size={12} />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteRole(role); }}
-                        className={`${s.actionBtn} ${s.actionBtnDelete}`}
-                        style={{ width: '26px', height: '26px' }}
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 20px', color: '#64748b' }}>
+          <div style={{ width: '40px', height: '40px', border: '3px solid #e2e8f0', borderTopColor: '#00b8e6', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '14px' }} />
+          <span style={{ fontWeight: '600', fontSize: '14px' }}>Loading roles & permissions...</span>
         </div>
+      ) : rolesList.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
+          <Shield size={40} color="#94a3b8" style={{ marginBottom: '12px' }} />
+          <h3 style={{ margin: '0 0 6px', color: '#0f172a', fontSize: '1.1rem' }}>No Roles Defined</h3>
+          <p style={{ margin: '0 0 16px', fontSize: '13px' }}>Create your first corporate role to assign permissions.</p>
+          <button onClick={handleOpenCreateModal} className={`${s.btn} ${s.btnPrimary}`}>
+            <Plus size={16} /> Create Role
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* Top Role Selector Tabs Bar */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '6px 0 12px',
+              borderBottom: '1.5px solid #e2e8f0',
+              marginBottom: '16px',
+              gap: '16px',
+            }}
+          >
+            {/* Scrollable Tabs Track with Right Edge Gradient Fade Indicator */}
+            <div style={{ position: 'relative', flex: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
+              <div
+                className={s.tabsScrollTrack}
+                style={{
+                  maskImage: 'linear-gradient(to right, black calc(100% - 36px), transparent 100%)',
+                  WebkitMaskImage: 'linear-gradient(to right, black calc(100% - 36px), transparent 100%)',
+                  paddingRight: '16px',
+                }}
+              >
+                <span style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '4px', flexShrink: 0 }}>
+                  Select Role:
+                </span>
 
-        {/* Right Column: Module Cards with Informative Headers & 2-Column Toggle Grid */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#0f172a' }}>
-                Privileges for <span style={{ color: '#0088bb' }}>{selectedRole?.name}</span>
-              </h2>
-              <p style={{ margin: '3px 0 0', fontSize: '12.5px', color: '#64748b' }}>
-                {selectedRole?.description || 'Grant or revoke capability permissions for this role'}
-              </p>
+              {rolesList.map((role) => {
+                const isSelected = selectedRole?.id === role.id;
+                return (
+                  <div
+                    key={role.id}
+                    onClick={() => handleSelectRole(role)}
+                    style={{
+                      padding: '7px 16px',
+                      borderRadius: '8px',
+                      background: isSelected ? '#00b8e6' : '#ffffff',
+                      color: isSelected ? '#ffffff' : '#334155',
+                      border: isSelected ? '1.5px solid #00b8e6' : '1.5px solid #e2e8f0',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontWeight: '700',
+                      fontSize: '13px',
+                      transition: 'all 0.15s ease',
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
+                      boxShadow: isSelected ? '0 3px 10px rgba(0, 184, 230, 0.25)' : '0 1px 2px rgba(0,0,0,0.02)',
+                    }}
+                  >
+                    <Shield size={14} color={isSelected ? '#ffffff' : '#0088bb'} />
+                    <span>{role.name}</span>
+
+                    {!role.is_system && (
+                      <div style={{ display: 'inline-flex', gap: '3px', marginLeft: '4px' }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOpenEditModal(role); }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: isSelected ? '#ffffff' : '#64748b',
+                            cursor: 'pointer',
+                            padding: '2px',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                          title="Edit role title"
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteRole(role); }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: isSelected ? '#ffffff' : '#ef4444',
+                            cursor: 'pointer',
+                            padding: '2px',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                          title="Delete role"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
+          </div>
 
+            {/* Right: Save Privileges Action Pin */}
             {!isCompanyAdmin && (
               <button
                 onClick={savePermissionsToDB}
                 disabled={saving}
                 className={`${s.btn} ${s.btnPrimary}`}
-                style={{ padding: '8px 18px', fontSize: '13px' }}
+                style={{ padding: '8px 20px', fontSize: '13px', flexShrink: 0 }}
               >
                 <Save size={14} />
                 <span>{saving ? 'Saving...' : 'Save Privileges'}</span>
@@ -423,12 +382,13 @@ export function RolesPage() {
             )}
           </div>
 
-          {/* Module Cards Grid */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Full-Width Module Permission Cards Grid */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {moduleCatalog.map((mod) => {
               const ModIcon = MODULE_ICONS[mod.module] || Folder;
               const modulePermIds = mod.permissions.map((p) => p.id);
               const allChecked = modulePermIds.length > 0 && modulePermIds.every((id) => activePerms.includes(id));
+              const displayName = mod.name || (mod.module ? mod.module.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()) : 'Module');
 
               return (
                 <div
@@ -437,17 +397,17 @@ export function RolesPage() {
                     background: '#ffffff',
                     border: '1px solid #e2e8f0',
                     borderRadius: '12px',
-                    padding: '16px 20px',
+                    padding: '12px 18px',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                   }}
                 >
-                  {/* Module Card Header with Logo + Name + Permission Scope Description */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {/* Module Card Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '9px',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
                         background: 'linear-gradient(135deg, rgba(0, 184, 230, 0.12), rgba(56, 189, 248, 0.2))',
                         color: '#0088bb',
                         display: 'flex',
@@ -456,17 +416,17 @@ export function RolesPage() {
                         flexShrink: 0,
                         border: '1px solid rgba(0, 184, 230, 0.25)',
                       }}>
-                        <ModIcon size={18} />
+                        <ModIcon size={16} />
                       </div>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a' }}>
-                            {mod.name}
+                          <span style={{ fontSize: '13.5px', fontWeight: '800', color: '#0f172a' }}>
+                            {displayName}
                           </span>
                           <span style={{
-                            fontSize: '11px',
+                            fontSize: '10.5px',
                             fontWeight: '600',
-                            padding: '2px 8px',
+                            padding: '1.5px 7px',
                             borderRadius: '999px',
                             background: '#f1f5f9',
                             color: '#475569',
@@ -474,9 +434,11 @@ export function RolesPage() {
                             {mod.permissions.length} Capabilities
                           </span>
                         </div>
-                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                          {mod.description}
-                        </div>
+                        {mod.description && (
+                          <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>
+                            {mod.description}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -487,7 +449,7 @@ export function RolesPage() {
                           background: 'transparent',
                           border: 'none',
                           color: '#0088bb',
-                          fontSize: '12px',
+                          fontSize: '11.5px',
                           fontWeight: '700',
                           cursor: 'pointer',
                         }}
@@ -497,8 +459,8 @@ export function RolesPage() {
                     )}
                   </div>
 
-                  {/* 2-Column Capability Grid with ON/OFF Toggle Switches */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                  {/* Balanced Comfortable Capability Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '10px' }}>
                     {mod.permissions.map((perm) => {
                       const isGranted = isCompanyAdmin || activePerms.includes(perm.id);
 
@@ -507,14 +469,14 @@ export function RolesPage() {
                           key={perm.id}
                           onClick={() => selectedRole && togglePermission(selectedRole.id, perm.id)}
                           style={{
-                            padding: '12px 16px',
-                            borderRadius: '10px',
+                            padding: '10px 14px',
+                            borderRadius: '9px',
                             background: '#ffffff',
                             border: isGranted ? '1.5px solid #00b8e6' : '1px solid #e2e8f0',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
-                            gap: '14px',
+                            gap: '12px',
                             cursor: isCompanyAdmin ? 'default' : 'pointer',
                             transition: 'all 0.15s ease',
                             boxShadow: isGranted ? '0 2px 6px rgba(0, 184, 230, 0.08)' : 'none',
@@ -525,14 +487,14 @@ export function RolesPage() {
                             <div style={{ fontWeight: '700', fontSize: '13px', color: '#0f172a' }}>
                               {perm.name}
                             </div>
-                            <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', lineHeight: '1.35' }}>
-                              {perm.description}
+                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', lineHeight: '1.3' }}>
+                              {perm.description || perm.slug}
                             </div>
                           </div>
 
                           {/* Right: Modern ON/OFF Toggle Switch */}
                           <div style={{
-                            width: '34px',
+                            width: '32px',
                             height: '18px',
                             borderRadius: '999px',
                             background: isGranted ? '#00b8e6' : '#cbd5e1',
@@ -547,7 +509,7 @@ export function RolesPage() {
                               background: '#ffffff',
                               position: 'absolute',
                               top: '2px',
-                              left: isGranted ? '18px' : '2px',
+                              left: isGranted ? '16px' : '2px',
                               transition: 'left 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                               boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                             }} />
@@ -560,8 +522,8 @@ export function RolesPage() {
               );
             })}
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
       {/* Matching Modal Structure as Bills Page */}
       {modal && (

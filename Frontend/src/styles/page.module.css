@@ -1,6 +1,6 @@
 /* ── 100% Fluid Dynamic Spacing & Responsive Layout ────────────────── */
 .page {
-  padding: clamp(16px, 2.5vw, 32px);
+  padding: 16px 24px 24px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -9,7 +9,7 @@
   flex: 1;
   min-height: calc(100vh - var(--header-height));
   font-family: var(--font-sans);
-  gap: clamp(14px, 2vw, 24px);
+  gap: 12px;
   position: relative;
 }
 
@@ -17,12 +17,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: clamp(12px, 1.8vw, 20px);
+  margin-bottom: 4px;
   gap: 12px;
   flex-wrap: wrap;
   width: 100%;
   position: relative;
-  padding-bottom: 8px;
+  padding-bottom: 0;
 }
 
 .pageTitle {
@@ -39,6 +39,23 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
   font-weight: 500;
+}
+
+.tabsScrollTrack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  flex: 1;
+  padding: 4px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tabsScrollTrack::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* ── Clean Pure Fluid Cards ─────────────────────────── */

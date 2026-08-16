@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Edit2, Trash2, X, Shield, CheckCircle2, Users, AlertCircle, Building2, Mail, Phone, UserCheck } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Shield, CheckCircle2, Users, AlertCircle, Building2, Mail, Phone, UserCheck, UserPlus } from 'lucide-react';
 import { userService } from '../services/userService';
 import { dbSelect, dbRun } from '../db/database';
 import s from '../styles/page.module.css';
@@ -107,11 +107,7 @@ export function StaffPage() {
       }
 
       setStaffList(mappedStaff);
-      setRolesList(remoteRoles && remoteRoles.length > 0 ? remoteRoles : [
-        { id: 'role-1', name: 'Company Admin', slug: 'company_admin' },
-        { id: 'role-2', name: 'Branch Manager', slug: 'branch_manager' },
-        { id: 'role-3', name: 'Billing Operator', slug: 'billing_operator' },
-      ]);
+      setRolesList(Array.isArray(remoteRoles) ? remoteRoles : []);
       setBranchesList(branchRows || []);
     } catch (err) {
       showToast(`Notice: ${err.message}`, false);
@@ -128,7 +124,8 @@ export function StaffPage() {
     const matchesSearch =
       (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.branchName || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (item.branchName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.department || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = selectedRoleFilter === 'ALL' || item.role.toLowerCase() === selectedRoleFilter.toLowerCase();
     const matchesStatus = selectedStatusFilter === 'ALL' || item.status === selectedStatusFilter;
     return matchesSearch && matchesRole && matchesStatus;
@@ -194,7 +191,12 @@ export function StaffPage() {
         try {
           await userService.createStaff(payload);
         } catch (apiErr) {
-          console.warn('API creation fallback:', apiErr.message);
+          if (apiErr.message && apiErr.message.toLowerCase().includes('already exists')) {
+            setErrors({ email: 'A user with this email address already exists.' });
+            showToast('A user with this email already exists!', true);
+            setSaving(false);
+            return;
+          }
         }
 
         const newId = `usr-${Date.now()}`;
@@ -296,184 +298,279 @@ export function StaffPage() {
         </button>
       </div>
 
-      {/* Table Container */}
-      <div className={s.tableContainer}>
-        {/* Toolbar */}
-        <div className={s.tableToolbar}>
-          <div className={s.searchWrap} style={{ maxWidth: '340px', flex: '1' }}>
-            <Search size={16} className={s.searchIcon} />
+      {/* Filter Toolbar (Exact Same Structure as BillsPage) */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '6px 0',
+          borderBottom: '1px solid var(--color-border)',
+          marginBottom: 12,
+          flexWrap: 'wrap',
+          gap: 12,
+        }}
+      >
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flex: 1, minWidth: 280 }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: 360 }}>
+            <Search size={15} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--color-text-muted)' }} />
             <input
-              type="text"
-              placeholder="Search staff by name, email..."
+              className={s.input}
+              style={{ paddingLeft: 36, height: 38, fontSize: 13 }}
+              placeholder="Search staff by name, email, branch..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={s.searchInput}
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <select
-              value={selectedRoleFilter}
-              onChange={(e) => setSelectedRoleFilter(e.target.value)}
-              className={s.select}
-              style={{ minWidth: '140px' }}
-            >
-              <option value="ALL">All Roles</option>
-              {rolesList.map((r) => (
-                <option key={r.id} value={r.name}>{r.name}</option>
-              ))}
-            </select>
+          <select
+            className={s.select}
+            style={{ width: 160, height: 38, fontSize: 13 }}
+            value={selectedRoleFilter}
+            onChange={(e) => setSelectedRoleFilter(e.target.value)}
+          >
+            <option value="ALL">All Roles</option>
+            {rolesList.map((r) => (
+              <option key={r.id} value={r.name}>{r.name}</option>
+            ))}
+          </select>
 
-            <select
-              value={selectedStatusFilter}
-              onChange={(e) => setSelectedStatusFilter(e.target.value)}
-              className={s.select}
-              style={{ minWidth: '130px' }}
-            >
-              <option value="ALL">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+          <select
+            className={s.select}
+            style={{ width: 140, height: 38, fontSize: 13 }}
+            value={selectedStatusFilter}
+            onChange={(e) => setSelectedStatusFilter(e.target.value)}
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
         </div>
 
-        {/* Table */}
-        <div className={s.tableWrap}>
-          <table className={s.table}>
-            <thead>
-              <tr>
-                <th>Staff Member</th>
-                <th>Role & Access</th>
-                <th>Branch / Location</th>
-                <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+        {(selectedRoleFilter !== 'ALL' || selectedStatusFilter !== 'ALL' || searchTerm) && (
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {selectedRoleFilter !== 'ALL' && (
+              <span className={s.chip}>
+                Role: {selectedRoleFilter}
+                <X size={12} className={s.chipRemove} onClick={() => setSelectedRoleFilter('ALL')} />
+              </span>
+            )}
+            {selectedStatusFilter !== 'ALL' && (
+              <span className={s.chip}>
+                Status: {selectedStatusFilter}
+                <X size={12} className={s.chipRemove} onClick={() => setSelectedStatusFilter('ALL')} />
+              </span>
+            )}
+            <button
+              className={`${s.btn} ${s.btnSecondary}`}
+              style={{ padding: '4px 8px', fontSize: 11 }}
+              onClick={() => { setSelectedRoleFilter('ALL'); setSelectedStatusFilter('ALL'); setSearchTerm(''); }}
+            >
+              Clear All
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Empty State OR Data Table (Exact Same as BillsPage) */}
+      {filteredStaff.length === 0 && !loading ? (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '60px 20px',
+            textAlign: 'center',
+            background: 'transparent',
+          }}
+        >
+          <div
+            className={s.emptyStateBadge}
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 20,
+              background: 'var(--color-accent-soft)',
+              border: '1.5px solid var(--color-accent-border)',
+              color: 'var(--color-accent)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 16,
+            }}
+          >
+            <Users size={30} />
+          </div>
+
+          <h3
+            style={{
+              fontSize: '1.2rem',
+              fontWeight: 700,
+              color: 'var(--color-text)',
+              margin: '0 0 6px',
+              fontFamily: 'var(--font-heading)',
+            }}
+          >
+            No Staff Members Found
+          </h3>
+
+          <p
+            style={{
+              fontSize: 13.5,
+              color: 'var(--color-text-muted)',
+              maxWidth: 440,
+              margin: '0 0 20px',
+              lineHeight: 1.55,
+            }}
+          >
+            Click below to enroll your corporate operators and assign system privileges.
+          </p>
+
+          <button className={`${s.btn} ${s.btnPrimary}`} style={{ padding: '10px 22px', fontSize: 13 }} onClick={openCreate}>
+            <Plus size={16} /> Add First Staff Member
+          </button>
+        </div>
+      ) : (
+        <div className={s.tableContainer} style={{ background: '#ffffff', borderRadius: 14, border: '1px solid var(--color-border)' }}>
+          <div className={s.tableWrap}>
+            <table className={s.table}>
+              <thead>
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                    Loading staff members...
-                  </td>
+                  <th style={{ width: '28%' }}>Staff Member</th>
+                  <th style={{ width: '20%' }}>Role & Access</th>
+                  <th style={{ width: '20%' }}>Branch / Location</th>
+                  <th style={{ width: '16%' }}>Department</th>
+                  <th style={{ width: '8%' }}>Status</th>
+                  <th style={{ width: '8%', textAlign: 'right' }}>Actions</th>
                 </tr>
-              ) : filteredStaff.length === 0 ? (
-                <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                    No staff members found matching your search.
-                  </td>
-                </tr>
-              ) : (
-                filteredStaff.map((staff) => (
-                  <tr key={staff.id}>
-                    {/* Name & Avatar */}
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{
-                          width: '38px',
-                          height: '38px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, rgba(0, 184, 230, 0.15), rgba(56, 189, 248, 0.25))',
-                          border: '1px solid rgba(0, 184, 230, 0.4)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#0088bb',
-                          fontWeight: '700',
-                          fontSize: '0.9rem',
-                        }}>
-                          {staff.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: '700', color: '#0f172a' }}>{staff.name}</div>
-                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{staff.email}</div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Role */}
-                    <td>
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        fontSize: '0.78rem',
-                        fontWeight: '700',
-                        background: '#e0f7fc',
-                        color: '#007fa3',
-                        border: '1px solid #b9eef8',
-                      }}>
-                        <Shield size={12} />
-                        {staff.role}
-                      </span>
-                    </td>
-
-                    {/* Branch */}
-                    <td style={{ color: '#334155', fontWeight: '500' }}>
-                      {staff.branchName}
-                    </td>
-
-                    {/* Status */}
-                    <td>
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '3px 9px',
-                        borderRadius: '999px',
-                        fontSize: '0.78rem',
-                        fontWeight: '600',
-                        background: staff.status === 'active' ? '#ecfdf5' : '#fef2f2',
-                        color: staff.status === 'active' ? '#059669' : '#dc2626',
-                        border: staff.status === 'active' ? '1px solid #a7f3d0' : '1px solid #fecaca',
-                      }}>
-                        <span style={{
-                          width: '6px',
-                          height: '6px',
-                          borderRadius: '50%',
-                          background: staff.status === 'active' ? '#10b981' : '#ef4444',
-                        }} />
-                        {staff.status === 'active' ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-
-                    {/* Actions */}
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: '6px' }}>
-                        <button
-                          onClick={() => openEdit(staff)}
-                          className={s.actionBtn}
-                          title="Edit profile"
-                        >
-                          <Edit2 size={15} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(staff)}
-                          className={`${s.actionBtn} ${s.actionBtnDelete}`}
-                          title="Delete staff"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                      Loading staff members...
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  filteredStaff.map((staff) => (
+                    <tr key={staff.id}>
+                      {/* Name & Avatar */}
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '8px',
+                            background: 'linear-gradient(135deg, rgba(0, 184, 230, 0.12), rgba(56, 189, 248, 0.2))',
+                            border: '1px solid rgba(0, 184, 230, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#0088bb',
+                            fontWeight: '800',
+                            fontSize: '0.85rem',
+                            flexShrink: 0,
+                          }}>
+                            {staff.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: '700', fontSize: '13.5px', color: '#0f172a' }}>{staff.name}</div>
+                            <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '1px' }}>{staff.email}</div>
+                          </div>
+                        </div>
+                      </td>
 
-        {/* Integrated Pagination Footer */}
-        <div className={s.tablePagination}>
-          <span>Showing 1 to {filteredStaff.length} of {filteredStaff.length} staff members</span>
-          <div className={s.pageButtons}>
-            <button className={s.pageBtn} disabled>Previous</button>
-            <button className={`${s.pageBtn} ${s.pageBtnActive}`}>1</button>
-            <button className={s.pageBtn} disabled>Next</button>
+                      {/* Role */}
+                      <td>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '0.78rem',
+                          fontWeight: '700',
+                          background: '#e0f7fc',
+                          color: '#007fa3',
+                          border: '1px solid #b9eef8',
+                        }}>
+                          <Shield size={12} />
+                          {staff.role}
+                        </span>
+                      </td>
+
+                      {/* Branch */}
+                      <td style={{ color: '#334155', fontWeight: '500', fontSize: '13px' }}>
+                        {staff.branchName}
+                      </td>
+
+                      {/* Department / Designation */}
+                      <td style={{ color: '#64748b', fontSize: '12.5px', fontWeight: '500' }}>
+                        {staff.department}
+                      </td>
+
+                      {/* Status */}
+                      <td>
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '3px 9px',
+                          borderRadius: '999px',
+                          fontSize: '0.78rem',
+                          fontWeight: '600',
+                          background: staff.status === 'active' ? '#ecfdf5' : '#fef2f2',
+                          color: staff.status === 'active' ? '#059669' : '#dc2626',
+                          border: staff.status === 'active' ? '1px solid #a7f3d0' : '1px solid #fecaca',
+                        }}>
+                          <span style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            background: staff.status === 'active' ? '#10b981' : '#ef4444',
+                          }} />
+                          {staff.status === 'active' ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', gap: '6px' }}>
+                          <button
+                            onClick={() => openEdit(staff)}
+                            className={s.actionBtn}
+                            title="Edit profile"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(staff)}
+                            className={`${s.actionBtn} ${s.actionBtnDelete}`}
+                            title="Delete staff"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Integrated Pagination Footer */}
+          <div className={s.tablePagination}>
+            <span>Showing 1 to {filteredStaff.length} of {filteredStaff.length} staff members</span>
+            <div className={s.pageButtons}>
+              <button className={s.pageBtn} disabled>Previous</button>
+              <button className={`${s.pageBtn} ${s.pageBtnActive}`}>1</button>
+              <button className={s.pageBtn} disabled>Next</button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Exact Same Modal Structure as Bills Page */}
       {showModal && (
