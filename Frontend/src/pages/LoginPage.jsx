@@ -193,9 +193,9 @@ export function LoginPage() {
               className={s.label}
               style={{
                 color: '#ffffff',
-                fontSize: 13.5,
+                fontSize: 12.5,
                 fontWeight: 600,
-                marginBottom: 7,
+                marginBottom: 5,
                 display: 'block',
                 textShadow: '0 2px 8px rgba(0,0,0,0.95)',
               }}
@@ -204,11 +204,11 @@ export function LoginPage() {
             </label>
             <div style={{ position: 'relative' }}>
               <Mail
-                size={19}
+                size={16}
                 style={{
                   position: 'absolute',
-                  left: 16,
-                  top: 16,
+                  left: 14,
+                  top: 13,
                   color: focusedField === 'email' ? 'var(--color-accent)' : '#ffffff',
                   transition: 'color 0.3s ease',
                 }}
@@ -219,16 +219,16 @@ export function LoginPage() {
                 onFocus={() => setFocusedField('email')}
                 onBlur={() => setFocusedField(null)}
                 style={{
-                  paddingLeft: 48,
-                  height: 50,
-                  fontSize: 14.5,
+                  paddingLeft: 42,
+                  height: 42,
+                  fontSize: 13.5,
                   fontWeight: 500,
                   background: focusedField === 'email' ? 'rgba(15, 23, 42, 0.88)' : 'rgba(15, 23, 42, 0.65)',
                   border: focusedField === 'email' ? '2px solid var(--color-accent)' : '1.5px solid rgba(255, 255, 255, 0.45)',
                   color: '#ffffff',
-                  borderRadius: 13,
-                  boxShadow: focusedField === 'email' ? '0 0 20px rgba(0, 184, 230, 0.45)' : '0 4px 14px rgba(0,0,0,0.4)',
-                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  borderRadius: 9,
+                  boxShadow: focusedField === 'email' ? '0 0 16px rgba(0, 184, 230, 0.4)' : '0 3px 10px rgba(0,0,0,0.3)',
+                  transition: 'all 0.25s ease',
                   outline: 'none',
                 }}
                 placeholder="name@organization.com"
@@ -238,7 +238,7 @@ export function LoginPage() {
               />
             </div>
             {errors.email && (
-              <span className={s.fieldError} style={{ color: '#fca5a5', fontSize: 12, marginTop: 4, display: 'block', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+              <span className={s.fieldError} style={{ color: '#fca5a5', fontSize: 11.5, marginTop: 3, display: 'block', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
                 {errors.email}
               </span>
             )}
@@ -246,17 +246,17 @@ export function LoginPage() {
 
           {/* Password Field */}
           <div className={s.field}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
               <label
                 className={s.label}
-                style={{ color: '#ffffff', fontSize: 13.5, fontWeight: 600, textShadow: '0 2px 8px rgba(0,0,0,0.95)' }}
+                style={{ color: '#ffffff', fontSize: 12.5, fontWeight: 600, textShadow: '0 2px 8px rgba(0,0,0,0.95)' }}
               >
                 Password
               </label>
               <Link
                 to="/forgot-password"
                 style={{
-                  fontSize: 12.5,
+                  fontSize: 12,
                   color: 'var(--color-accent)',
                   fontWeight: 700,
                   textDecoration: 'none',
@@ -268,11 +268,11 @@ export function LoginPage() {
             </div>
             <div style={{ position: 'relative' }}>
               <Lock
-                size={19}
+                size={16}
                 style={{
                   position: 'absolute',
-                  left: 16,
-                  top: 16,
+                  left: 14,
+                  top: 13,
                   color: focusedField === 'password' ? 'var(--color-accent)' : '#ffffff',
                   transition: 'color 0.3s ease',
                 }}
@@ -283,17 +283,17 @@ export function LoginPage() {
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 style={{
-                  paddingLeft: 48,
-                  paddingRight: 48,
-                  height: 50,
-                  fontSize: 14.5,
+                  paddingLeft: 42,
+                  paddingRight: 42,
+                  height: 42,
+                  fontSize: 13.5,
                   fontWeight: 500,
                   background: focusedField === 'password' ? 'rgba(15, 23, 42, 0.88)' : 'rgba(15, 23, 42, 0.65)',
                   border: focusedField === 'password' ? '2px solid var(--color-accent)' : '1.5px solid rgba(255, 255, 255, 0.45)',
                   color: '#ffffff',
-                  borderRadius: 13,
-                  boxShadow: focusedField === 'password' ? '0 0 20px rgba(0, 184, 230, 0.45)' : '0 4px 14px rgba(0,0,0,0.4)',
-                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  borderRadius: 9,
+                  boxShadow: focusedField === 'password' ? '0 0 16px rgba(0, 184, 230, 0.4)' : '0 3px 10px rgba(0,0,0,0.3)',
+                  transition: 'all 0.25s ease',
                   outline: 'none',
                 }}
                 placeholder="••••••••"
@@ -306,8 +306,8 @@ export function LoginPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: 'absolute',
-                  right: 16,
-                  top: 16,
+                  right: 14,
+                  top: 13,
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
@@ -315,11 +315,11 @@ export function LoginPage() {
                   padding: 0,
                 }}
               >
-                {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
             {errors.password && (
-              <span className={s.fieldError} style={{ color: '#fca5a5', fontSize: 12, marginTop: 4, display: 'block', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+              <span className={s.fieldError} style={{ color: '#fca5a5', fontSize: 11.5, marginTop: 3, display: 'block', textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
                 {errors.password}
               </span>
             )}
@@ -331,16 +331,16 @@ export function LoginPage() {
             className={`${s.btn} ${s.btnPrimary}`}
             style={{
               width: '100%',
-              height: 50,
-              fontSize: 15.5,
+              height: 42,
+              fontSize: 14,
               fontWeight: 700,
               justifyContent: 'center',
               marginTop: 4,
               background: 'var(--grad-cyan-button)',
               borderColor: 'var(--color-accent)',
               boxShadow: 'var(--shadow-cyan)',
-              borderRadius: 13,
-              transition: 'all 0.3s ease',
+              borderRadius: 9,
+              transition: 'all 0.25s ease',
               cursor: 'pointer',
               color: '#ffffff',
             }}
