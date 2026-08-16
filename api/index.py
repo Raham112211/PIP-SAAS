@@ -17,15 +17,24 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Session
 from sqlalchemy.pool import StaticPool
 
-# ── 1. Database Setup (Cross-Platform / Vercel Serverless Temp Storage) ────────
-tmp_db = Path(tempfile.gettempdir()) / "pip_saas_cloud.db"
-DATABASE_URL = f"sqlite:///{tmp_db.as_posix()}"
+# ── 1. Database Setup (Cloud DB via DATABASE_URL or SQLite Storage) ────────────
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    tmp_db = Path(tempfile.gettempdir()) / "pip_saas_cloud.db"
+    DATABASE_URL = f"sqlite:///{tmp_db.as_posix()}"
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+if "sqlite" in DATABASE_URL:
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -263,24 +272,30 @@ def create_staff(
     try:
         existing = db.scalars(select(User).where(User.email == payload.email)).first()
         if existing:
-            raise HTTPException(status_code=400, detail=f"User with email '{payload.email}' already exists.")
-        
-        user = User(
-            id=f"usr-{uuid.uuid4().hex[:8]}",
-            organization_id=org_id,
-            email=payload.email,
-            full_name=payload.full_name,
-            phone=payload.phone,
-            designation=payload.designation,
-            role="staff",
-            role_id=payload.role_id,
-            status="active",
-            is_active=True,
-            is_verified=True,
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+            existing.full_name = payload.full_name
+            existing.phone = payload.phone
+            existing.designation = payload.designation
+            if payload.role_id: existing.role_id = payload.role_id
+            db.commit()
+            db.refresh(existing)
+            user = existing
+        else:
+            user = User(
+                id=f"usr-{uuid.uuid4().hex[:8]}",
+                organization_id=org_id,
+                email=payload.email,
+                full_name=payload.full_name,
+                phone=payload.phone,
+                designation=payload.designation,
+                role="staff",
+                role_id=payload.role_id,
+                status="active",
+                is_active=True,
+                is_verified=True,
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
         return {
             "id": user.id,
             "organization_id": user.organization_id,

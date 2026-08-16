@@ -62,9 +62,42 @@ export function StaffPage() {
       const branchRows = await dbSelect(`SELECT * FROM branches ORDER BY name ASC`).catch(() => []);
       const localUsers = await dbSelect(`SELECT * FROM users ORDER BY name ASC`).catch(() => []);
 
-      let mappedStaff = [];
+      // ── Persistent Merged Staff Engine (Zero Record Loss on Hard Refresh) ──
+      const staffMap = new Map();
+
+      // 1. Load from local database
+      for (const u of localUsers) {
+        if (u.email) {
+          staffMap.set(u.email.toLowerCase(), {
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            phone: u.phone || '',
+            role: u.role || 'Staff',
+            role_id: '',
+            branch_id: '',
+            branchName: u.organizationName || 'Main Office',
+            department: 'Operations',
+            status: 'active',
+            isActive: true,
+            createdAt: 'Active',
+          });
+        }
+      }
+
+      // 2. Load from persistent storage cache
+      try {
+        const cached = JSON.parse(localStorage.getItem('pip_persistent_staff') || '[]');
+        for (const s of cached) {
+          if (s.email) {
+            staffMap.set(s.email.toLowerCase(), s);
+          }
+        }
+      } catch (e) {}
+
+      // 3. Overlay remote API staff
       if (remoteStaff && remoteStaff.length > 0) {
-        mappedStaff = remoteStaff.map((sItem) => {
+        for (const sItem of remoteStaff) {
           const branchNames = sItem.branches && sItem.branches.length > 0
             ? sItem.branches.map((b) => b.name).join(', ')
             : 'Unassigned';
@@ -72,7 +105,7 @@ export function StaffPage() {
             ? sItem.branches[0].id
             : '';
 
-          return {
+          staffMap.set(sItem.email.toLowerCase(), {
             id: sItem.id,
             name: sItem.full_name,
             email: sItem.email,
@@ -87,26 +120,16 @@ export function StaffPage() {
             createdAt: sItem.created_at
               ? new Date(sItem.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
               : 'Active',
-          };
-        });
-      } else {
-        mappedStaff = localUsers.map((u) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          phone: u.phone || '',
-          role: u.role || 'Staff',
-          role_id: '',
-          branch_id: '',
-          branchName: u.organizationName || 'Main Office',
-          department: 'Operations',
-          status: 'active',
-          isActive: true,
-          createdAt: 'Active',
-        }));
+          });
+        }
       }
 
-      setStaffList(mappedStaff);
+      const mergedList = Array.from(staffMap.values());
+      setStaffList(mergedList);
+      try {
+        localStorage.setItem('pip_persistent_staff', JSON.stringify(mergedList));
+      } catch (e) {}
+
       setRolesList(Array.isArray(remoteRoles) ? remoteRoles : []);
       setBranchesList(branchRows || []);
     } catch (err) {
@@ -221,8 +244,14 @@ export function StaffPage() {
           createdAt: 'Just now',
         };
 
-        // Optimistically add to state without losing previous items
-        setStaffList((prev) => [newStaffItem, ...prev.filter((s) => s.id !== newId && s.email !== form.email.trim())]);
+        // Optimistically update and persist immediately
+        setStaffList((prev) => {
+          const updated = [newStaffItem, ...prev.filter((s) => s.id !== newId && s.email.toLowerCase() !== form.email.trim().toLowerCase())];
+          try {
+            localStorage.setItem('pip_persistent_staff', JSON.stringify(updated));
+          } catch (e) {}
+          return updated;
+        });
 
         await dbRun(
           `INSERT OR REPLACE INTO users (id, email, name, organizationName, phone, role, password) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -248,9 +277,9 @@ export function StaffPage() {
           console.warn('API update fallback:', apiErr.message);
         }
 
-        setStaffList((prev) =>
-          prev.map((s) =>
-            s.id === selectedStaff.id
+        setStaffList((prev) => {
+          const updated = prev.map((s) =>
+            s.id === selectedStaff.id || s.email.toLowerCase() === form.email.trim().toLowerCase()
               ? {
                   ...s,
                   name: form.name.trim(),
@@ -261,8 +290,12 @@ export function StaffPage() {
                   status: form.status,
                 }
               : s
-          )
-        );
+          );
+          try {
+            localStorage.setItem('pip_persistent_staff', JSON.stringify(updated));
+          } catch (e) {}
+          return updated;
+        });
 
         await dbRun(
           `UPDATE users SET name = ?, phone = ?, role = ? WHERE id = ? OR email = ?`,
