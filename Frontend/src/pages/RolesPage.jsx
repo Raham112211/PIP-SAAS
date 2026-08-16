@@ -50,46 +50,20 @@ export function RolesPage() {
       const roles = Array.isArray(remoteRoles) ? remoteRoles : [];
       const modules = Array.isArray(remoteModules) ? remoteModules : [];
 
-      // ── Persistent Merged Roles Engine (Zero Loss on Hard Refresh) ──
-      const rolesMap = new Map();
-
-      // 1. Load persistent cache
-      try {
-        const cached = JSON.parse(localStorage.getItem('pip_persistent_roles') || '[]');
-        for (const r of cached) {
-          if (r.id || r.name) {
-            rolesMap.set((r.id || r.name).toLowerCase(), r);
-          }
-        }
-      } catch (e) {}
-
-      // 2. Overlay remote API roles
-      for (const r of roles) {
-        if (r.id || r.name) {
-          rolesMap.set((r.id || r.name).toLowerCase(), r);
-        }
-      }
-
-      const mergedRoles = Array.from(rolesMap.values());
-      setRolesList(mergedRoles);
-      try {
-        localStorage.setItem('pip_persistent_roles', JSON.stringify(mergedRoles));
-      } catch (e) {}
-
+      setRolesList(roles);
       setModuleCatalog(modules);
 
-      if (mergedRoles.length > 0) {
-        const active = selectedRole && mergedRoles.find((r) => r.id === selectedRole.id)
-          ? mergedRoles.find((r) => r.id === selectedRole.id)
-          : mergedRoles[0];
+      if (roles.length > 0) {
+        const active = selectedRole && roles.find((r) => r.id === selectedRole.id)
+          ? roles.find((r) => r.id === selectedRole.id)
+          : roles[0];
         setSelectedRole(active);
 
-        // Fetch real permissions for all roles
+        // Fetch real permissions for all roles directly from PostgreSQL
         const permMap = {};
         await Promise.all(
-          mergedRoles.map(async (r) => {
+          roles.map(async (r) => {
             if (r.slug === 'company_admin') {
-              // Company admin has all permissions
               permMap[r.id] = modules.flatMap((m) => m.permissions.map((p) => p.id));
             } else {
               try {
@@ -104,7 +78,7 @@ export function RolesPage() {
         setRolePermissionsMap(permMap);
       }
     } catch (err) {
-      console.error('Error loading roles data:', err);
+      console.error('PostgreSQL roles fetch notice:', err);
     } finally {
       setLoading(false);
     }
@@ -112,7 +86,6 @@ export function RolesPage() {
 
   useEffect(() => {
     loadData(true);
-    // Real-time multi-device sync interval (auto-refreshes every 3.5 seconds across all open laptops/tabs)
     const interval = setInterval(() => {
       loadData(false);
     }, 3500);
@@ -164,7 +137,7 @@ export function RolesPage() {
     setSaving(true);
     try {
       await userService.updateRolePermissions(selectedRole.id, activePerms);
-      showToast(`Permissions updated for role "${selectedRole.name}"!`);
+      showToast(`Permissions saved in PostgreSQL for role "${selectedRole.name}"!`);
     } catch (err) {
       showToast(`Error saving: ${err.message}`, true);
     } finally {
@@ -204,60 +177,23 @@ export function RolesPage() {
     setSaving(true);
     try {
       if (modal === 'create') {
-        let createdRole = null;
-        try {
-          createdRole = await userService.createRole({
-            name: form.name.trim(),
-            description: form.description.trim(),
-            permission_ids: [],
-          });
-        } catch (apiErr) {
-          console.warn('Role create fallback:', apiErr.message);
-        }
-
-        const fallbackRole = createdRole || {
-          id: `role-${Date.now()}`,
+        const createdRole = await userService.createRole({
           name: form.name.trim(),
-          slug: form.name.toLowerCase().replace(/\s+/g, '_'),
           description: form.description.trim(),
-          is_system: false,
-        };
-
-        setRolesList((prev) => {
-          const updated = [...prev.filter((r) => r.id !== fallbackRole.id), fallbackRole];
-          try {
-            localStorage.setItem('pip_persistent_roles', JSON.stringify(updated));
-          } catch (e) {}
-          return updated;
+          permission_ids: [],
         });
 
-        setSelectedRole(fallbackRole);
-        showToast(`Role "${form.name}" created successfully!`);
+        setSelectedRole(createdRole);
+        showToast(`Role "${form.name}" created in PostgreSQL!`);
         setModal(null);
         await loadData(false);
       } else if (modal === 'edit' && selectedRole) {
-        try {
-          await userService.updateRole(selectedRole.id, {
-            name: form.name.trim(),
-            description: form.description.trim(),
-          });
-        } catch (apiErr) {
-          console.warn('Role update fallback:', apiErr.message);
-        }
-
-        setRolesList((prev) => {
-          const updated = prev.map((r) =>
-            r.id === selectedRole.id
-              ? { ...r, name: form.name.trim(), description: form.description.trim() }
-              : r
-          );
-          try {
-            localStorage.setItem('pip_persistent_roles', JSON.stringify(updated));
-          } catch (e) {}
-          return updated;
+        await userService.updateRole(selectedRole.id, {
+          name: form.name.trim(),
+          description: form.description.trim(),
         });
 
-        showToast(`Role details updated!`);
+        showToast(`Role details updated in PostgreSQL!`);
         setModal(null);
         await loadData(false);
       }
@@ -273,24 +209,15 @@ export function RolesPage() {
       showToast('System roles cannot be deleted.', true);
       return;
     }
-    if (!window.confirm(`Are you sure you want to remove role "${role.name}"?`)) return;
+    if (!window.confirm(`Are you sure you want to remove role "${role.name}" from PostgreSQL?`)) return;
 
     try {
       await userService.deleteRole(role.id);
+      showToast(`Role "${role.name}" removed from PostgreSQL.`);
+      await loadData(false);
     } catch (err) {
-      console.warn('Role delete fallback:', err.message);
+      showToast(`Delete failed: ${err.message}`, true);
     }
-
-    setRolesList((prev) => {
-      const updated = prev.filter((r) => r.id !== role.id);
-      try {
-        localStorage.setItem('pip_persistent_roles', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
-
-    showToast(`Role "${role.name}" removed successfully.`);
-    await loadData(false);
   };
 
   return (

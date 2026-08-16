@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Plus, Search, Edit2, Trash2, X, Shield, CheckCircle2, Users, AlertCircle, Building2, Mail, Phone, UserCheck, UserPlus } from 'lucide-react';
 import { userService } from '../services/userService';
-import { dbSelect, dbRun } from '../db/database';
 import s from '../styles/page.module.css';
 
 const EMPTY_STAFF = {
@@ -42,98 +41,44 @@ export function StaffPage() {
   const loadData = async (isInitial = false) => {
     if (isInitial && staffList.length === 0) setLoading(true);
     try {
-      let remoteStaff = null;
-      let remoteRoles = null;
+      const [staffRes, rolesRes] = await Promise.all([
+        userService.getStaff().catch(() => ({ items: [] })),
+        userService.getRoles().catch(() => []),
+      ]);
 
-      try {
-        const staffRes = await userService.getStaff();
-        if (staffRes && staffRes.items) remoteStaff = staffRes.items;
-      } catch (err) {
-        console.warn('API staff load fallback:', err.message);
-      }
+      const remoteStaff = staffRes && staffRes.items ? staffRes.items : [];
+      const remoteRoles = Array.isArray(rolesRes) ? rolesRes : [];
 
-      try {
-        const rolesRes = await userService.getRoles();
-        if (Array.isArray(rolesRes)) remoteRoles = rolesRes;
-      } catch (err) {
-        console.warn('API roles load fallback:', err.message);
-      }
+      const mappedStaff = remoteStaff.map((sItem) => {
+        const branchNames = sItem.branches && sItem.branches.length > 0
+          ? sItem.branches.map((b) => b.name).join(', ')
+          : 'Unassigned';
+        const primaryBranchId = sItem.branches && sItem.branches.length > 0
+          ? sItem.branches[0].id
+          : '';
 
-      const branchRows = await dbSelect(`SELECT * FROM branches ORDER BY name ASC`).catch(() => []);
-      const localUsers = await dbSelect(`SELECT * FROM users ORDER BY name ASC`).catch(() => []);
+        return {
+          id: sItem.id,
+          name: sItem.full_name,
+          email: sItem.email,
+          phone: sItem.phone || '',
+          role: sItem.role_details?.name || (sItem.role ? sItem.role.replace('_', ' ') : 'Staff'),
+          role_id: sItem.role_id || '',
+          branch_id: primaryBranchId,
+          branchName: branchNames,
+          department: sItem.designation || 'Operations',
+          status: sItem.status || 'active',
+          isActive: sItem.is_active,
+          createdAt: sItem.created_at
+            ? new Date(sItem.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : 'Active',
+        };
+      });
 
-      // ── Persistent Merged Staff Engine (Zero Record Loss on Hard Refresh) ──
-      const staffMap = new Map();
-
-      // 1. Load from local database
-      for (const u of localUsers) {
-        if (u.email) {
-          staffMap.set(u.email.toLowerCase(), {
-            id: u.id,
-            name: u.name,
-            email: u.email,
-            phone: u.phone || '',
-            role: u.role || 'Staff',
-            role_id: '',
-            branch_id: '',
-            branchName: u.organizationName || 'Main Office',
-            department: 'Operations',
-            status: 'active',
-            isActive: true,
-            createdAt: 'Active',
-          });
-        }
-      }
-
-      // 2. Load from persistent storage cache
-      try {
-        const cached = JSON.parse(localStorage.getItem('pip_persistent_staff') || '[]');
-        for (const s of cached) {
-          if (s.email) {
-            staffMap.set(s.email.toLowerCase(), s);
-          }
-        }
-      } catch (e) {}
-
-      // 3. Overlay remote API staff
-      if (remoteStaff && remoteStaff.length > 0) {
-        for (const sItem of remoteStaff) {
-          const branchNames = sItem.branches && sItem.branches.length > 0
-            ? sItem.branches.map((b) => b.name).join(', ')
-            : 'Unassigned';
-          const primaryBranchId = sItem.branches && sItem.branches.length > 0
-            ? sItem.branches[0].id
-            : '';
-
-          staffMap.set(sItem.email.toLowerCase(), {
-            id: sItem.id,
-            name: sItem.full_name,
-            email: sItem.email,
-            phone: sItem.phone || '',
-            role: sItem.role_details?.name || (sItem.role ? sItem.role.replace('_', ' ') : 'Staff'),
-            role_id: sItem.role_id || '',
-            branch_id: primaryBranchId,
-            branchName: branchNames,
-            department: sItem.designation || 'Operations',
-            status: sItem.status || 'active',
-            isActive: sItem.is_active,
-            createdAt: sItem.created_at
-              ? new Date(sItem.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-              : 'Active',
-          });
-        }
-      }
-
-      const mergedList = Array.from(staffMap.values());
-      setStaffList(mergedList);
-      try {
-        localStorage.setItem('pip_persistent_staff', JSON.stringify(mergedList));
-      } catch (e) {}
-
-      setRolesList(Array.isArray(remoteRoles) ? remoteRoles : []);
-      setBranchesList(branchRows || []);
+      setStaffList(mappedStaff);
+      setRolesList(remoteRoles);
     } catch (err) {
-      // Background sync fallback
+      console.error('PostgreSQL staff fetch notice:', err.message);
     } finally {
       setLoading(false);
     }
@@ -141,7 +86,6 @@ export function StaffPage() {
 
   useEffect(() => {
     loadData(true);
-    // Real-time multi-device sync interval (auto-refreshes every 3.5 seconds across all open laptops/tabs)
     const interval = setInterval(() => {
       loadData(false);
     }, 3500);
@@ -216,49 +160,8 @@ export function StaffPage() {
           designation: form.department.trim() || 'Staff',
         };
 
-        let createdRemote = null;
-        try {
-          createdRemote = await userService.createStaff(payload);
-        } catch (apiErr) {
-          if (apiErr.message && apiErr.message.toLowerCase().includes('already exists')) {
-            setErrors({ email: 'A user with this email address already exists.' });
-            showToast('A user with this email already exists!', true);
-            setSaving(false);
-            return;
-          }
-        }
-
-        const newId = createdRemote?.id || `usr-${Date.now()}`;
-        const newStaffItem = {
-          id: newId,
-          name: form.name.trim(),
-          email: form.email.trim(),
-          phone: form.phone.trim(),
-          role: form.role || 'Staff',
-          role_id: form.role_id || '',
-          branch_id: form.branch_id || '',
-          branchName: form.branchName || 'Main Office',
-          department: form.department.trim() || 'Operations',
-          status: 'active',
-          isActive: true,
-          createdAt: 'Just now',
-        };
-
-        // Optimistically update and persist immediately
-        setStaffList((prev) => {
-          const updated = [newStaffItem, ...prev.filter((s) => s.id !== newId && s.email.toLowerCase() !== form.email.trim().toLowerCase())];
-          try {
-            localStorage.setItem('pip_persistent_staff', JSON.stringify(updated));
-          } catch (e) {}
-          return updated;
-        });
-
-        await dbRun(
-          `INSERT OR REPLACE INTO users (id, email, name, organizationName, phone, role, password) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [newId, form.email.trim(), form.name.trim(), form.branchName || 'Main Office', form.phone.trim(), form.role || 'Staff', 'demo123']
-        ).catch(() => {});
-
-        showToast(`Staff member "${form.name}" enrolled successfully!`);
+        await userService.createStaff(payload);
+        showToast(`Staff member "${form.name}" saved to PostgreSQL successfully!`);
         setShowModal(false);
         await loadData(false);
       } else {
@@ -271,45 +174,18 @@ export function StaffPage() {
           is_active: form.status === 'active',
         };
 
-        try {
-          await userService.updateStaff(selectedStaff.id, payload);
-        } catch (apiErr) {
-          console.warn('API update fallback:', apiErr.message);
-        }
-
-        setStaffList((prev) => {
-          const updated = prev.map((s) =>
-            s.id === selectedStaff.id || s.email.toLowerCase() === form.email.trim().toLowerCase()
-              ? {
-                  ...s,
-                  name: form.name.trim(),
-                  phone: form.phone.trim(),
-                  role: form.role || s.role,
-                  branchName: form.branchName || s.branchName,
-                  department: form.department.trim(),
-                  status: form.status,
-                }
-              : s
-          );
-          try {
-            localStorage.setItem('pip_persistent_staff', JSON.stringify(updated));
-          } catch (e) {}
-          return updated;
-        });
-
-        await dbRun(
-          `UPDATE users SET name = ?, phone = ?, role = ? WHERE id = ? OR email = ?`,
-          [form.name.trim(), form.phone.trim(), form.role || 'Staff', selectedStaff.id, form.email.trim()]
-        ).catch(() => {});
-
-        showToast(`Profile for "${form.name}" updated successfully.`);
+        await userService.updateStaff(selectedStaff.id, payload);
+        showToast(`Profile for "${form.name}" updated in PostgreSQL.`);
         setShowModal(false);
         await loadData(false);
       }
     } catch (err) {
-      showToast(`Action: ${err.message}`, false);
-      setShowModal(false);
-      await loadData(false);
+      if (err.message && err.message.toLowerCase().includes('already exists')) {
+        setErrors({ email: 'A user with this email address already exists.' });
+        showToast('A user with this email already exists!', true);
+      } else {
+        showToast(`Action error: ${err.message}`, true);
+      }
     } finally {
       setSaving(false);
     }
