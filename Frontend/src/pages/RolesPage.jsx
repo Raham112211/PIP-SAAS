@@ -6,8 +6,7 @@ import {
   Award, BarChart3, SlidersHorizontal, MoreVertical
 } from 'lucide-react';
 import { userService } from '../services/userService';
-import { realtimeSocket } from '../services/websocket';
-import { dbSelect, dbRun } from '../db/database';
+import s from '../styles/page.module.css';
 
 const MODULE_ICONS = {
   staff: Users,
@@ -93,13 +92,11 @@ export function RolesPage() {
     'role-2': ['perm-dash-view', 'perm-staff-view', 'perm-branch-view', 'perm-bills-view', 'perm-reports-view'],
     'role-3': ['perm-dash-view', 'perm-bills-view', 'perm-bills-manage', 'perm-reports-view'],
   });
-  const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState(null); // 'create' | 'edit' | null
   const [form, setForm] = useState(EMPTY_ROLE_FORM);
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [actionMenuRoleId, setActionMenuRoleId] = useState(null);
 
   const showToast = (msg, isError = false) => {
     setToast({ message: msg, isError });
@@ -133,7 +130,6 @@ export function RolesPage() {
 
   const handleSelectRole = (role) => {
     setSelectedRole(role);
-    setActionMenuRoleId(null);
   };
 
   const activePerms = selectedRole ? rolePermissionsMap[selectedRole.id] || [] : [];
@@ -203,7 +199,6 @@ export function RolesPage() {
     setErrors({});
     setSelectedRole(role);
     setModal('edit');
-    setActionMenuRoleId(null);
   };
 
   const handleSaveRoleModal = async (e) => {
@@ -288,78 +283,57 @@ export function RolesPage() {
     } catch (err) {
       showToast(`Role removed successfully.`);
     }
-    setActionMenuRoleId(null);
   };
 
   return (
-    <div style={{ padding: '20px 28px', background: '#0b1329', minHeight: '100vh', color: '#fff', fontFamily: 'inherit' }}>
+    <div className={s.page}>
       {/* Toast Notification */}
       {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 24,
-            right: 24,
-            zIndex: 9999,
-            background: toast.isError ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)',
-            color: '#fff',
-            padding: '12px 20px',
-            borderRadius: 10,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-            backdropFilter: 'blur(8px)',
-          }}
-        >
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 20px',
+          borderRadius: '10px',
+          background: toast.isError ? '#ef4444' : '#00b8e6',
+          color: '#fff',
+          fontWeight: '600',
+          fontSize: '0.9rem',
+          boxShadow: '0 8px 24px rgba(0, 184, 230, 0.35)',
+        }}>
           {toast.isError ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
           <span>{toast.message}</span>
         </div>
       )}
 
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, rgba(6,182,212,0.2), rgba(59,130,246,0.2))', border: '1px solid rgba(6,182,212,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#06b6d4' }}>
-            <Shield size={22} />
-          </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Roles & System Privileges</h1>
-            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#94a3b8' }}>Configure security access matrices and fine-grained operator capabilities</p>
-          </div>
+      {/* Page Header */}
+      <div className={s.pageHeader}>
+        <div>
+          <h1 className={s.pageTitle}>Roles & System Privileges</h1>
+          <p className={s.pageSubtitle}>
+            Configure security access matrices and fine-grained operator capabilities
+          </p>
         </div>
 
-        <button
-          onClick={handleOpenCreateModal}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '10px 18px',
-            borderRadius: 10,
-            background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 600,
-            fontSize: '0.88rem',
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(6, 182, 212, 0.3)',
-          }}
-        >
+        <button onClick={handleOpenCreateModal} className={`${s.btn} ${s.btnPrimary}`}>
           <Plus size={16} />
           <span>New Role</span>
         </button>
       </div>
 
-      {/* 2-Column Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 24 }}>
-        {/* Left: Roles List */}
-        <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 14, padding: 16 }}>
-          <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
+      {/* 2-Column Responsive Layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 320px) 1fr', gap: '20px', alignItems: 'start' }}>
+        {/* Left Column: Defined Roles */}
+        <div className={s.card} style={{ margin: 0, padding: '18px' }}>
+          <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '14px', fontFamily: 'var(--font-heading)' }}>
             Defined Roles ({rolesList.length})
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {rolesList.map((role) => {
               const isSelected = selectedRole?.id === role.id;
               return (
@@ -368,9 +342,9 @@ export function RolesPage() {
                   onClick={() => handleSelectRole(role)}
                   style={{
                     padding: '12px 14px',
-                    borderRadius: 10,
-                    background: isSelected ? 'rgba(6, 182, 212, 0.15)' : 'rgba(255, 255, 255, 0.02)',
-                    border: isSelected ? '1px solid rgba(6, 182, 212, 0.4)' : '1px solid rgba(255, 255, 255, 0.04)',
+                    borderRadius: '8px',
+                    background: isSelected ? '#e0f7fc' : '#f8fafc',
+                    border: isSelected ? '1.5px solid #00b8e6' : '1px solid var(--color-border)',
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -379,27 +353,29 @@ export function RolesPage() {
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.92rem', color: isSelected ? '#38bdf8' : '#f8fafc' }}>
+                    <div style={{ fontWeight: '700', fontSize: '0.92rem', color: isSelected ? '#007fa3' : '#0f172a' }}>
                       {role.name}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 2 }}>
-                      {role.is_system ? 'System Default' : 'Custom Corporate Role'}
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                      {role.is_system ? 'System Default' : 'Custom Role'}
                     </div>
                   </div>
 
                   {!role.is_system && (
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    <div style={{ display: 'flex', gap: '4px' }}>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleOpenEditModal(role); }}
-                        style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 4 }}
+                        className={s.actionBtn}
+                        style={{ width: '28px', height: '28px' }}
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={13} />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteRole(role); }}
-                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 4 }}
+                        className={`${s.actionBtn} ${s.actionBtnDelete}`}
+                        style={{ width: '28px', height: '28px' }}
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   )}
@@ -409,14 +385,14 @@ export function RolesPage() {
           </div>
         </div>
 
-        {/* Right: Permission Matrix */}
-        <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: 14, padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid rgba(255, 255, 255, 0.06)', paddingBottom: 16 }}>
+        {/* Right Column: Permission Matrix */}
+        <div className={s.card} style={{ margin: 0, padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--color-border)', paddingBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
             <div>
-              <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#f8fafc' }}>
-                Permissions for <span style={{ color: '#06b6d4' }}>{selectedRole?.name}</span>
+              <div style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', fontFamily: 'var(--font-heading)' }}>
+                Privileges for <span style={{ color: '#0088bb' }}>{selectedRole?.name}</span>
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: 3 }}>
+              <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '3px' }}>
                 {selectedRole?.description || 'Grant or revoke capability permissions across all platform modules'}
               </div>
             </div>
@@ -425,29 +401,17 @@ export function RolesPage() {
               <button
                 onClick={savePermissionsToDB}
                 disabled={saving}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '9px 18px',
-                  borderRadius: 8,
-                  background: 'linear-gradient(135deg, #10b981, #059669)',
-                  color: '#fff',
-                  border: 'none',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-                }}
+                className={`${s.btn} ${s.btnPrimary}`}
+                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
               >
-                <Save size={15} />
+                <Save size={14} />
                 <span>{saving ? 'Saving...' : 'Save Privileges'}</span>
               </button>
             )}
           </div>
 
-          {/* Module Cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Module Privileges */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {moduleCatalog.map((mod) => {
               const ModIcon = MODULE_ICONS[mod.module] || Shield;
               const modulePermIds = mod.permissions.map((p) => p.id);
@@ -457,16 +421,16 @@ export function RolesPage() {
                 <div
                   key={mod.module}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    borderRadius: 10,
-                    padding: 16,
+                    background: '#f8fcfe',
+                    border: '1px solid #e0f2fe',
+                    borderRadius: '8px',
+                    padding: '14px',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <ModIcon size={18} color="#38bdf8" />
-                      <span style={{ fontWeight: 600, fontSize: '0.95rem', color: '#f8fafc' }}>{mod.name}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <ModIcon size={16} color="#0088bb" />
+                      <span style={{ fontWeight: '700', fontSize: '0.9rem', color: '#0f172a' }}>{mod.name}</span>
                     </div>
 
                     {!isCompanyAdmin && (
@@ -475,9 +439,9 @@ export function RolesPage() {
                         style={{
                           background: 'transparent',
                           border: 'none',
-                          color: '#06b6d4',
+                          color: '#0088bb',
                           fontSize: '0.78rem',
-                          fontWeight: 600,
+                          fontWeight: '700',
                           cursor: 'pointer',
                         }}
                       >
@@ -486,7 +450,7 @@ export function RolesPage() {
                     )}
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '10px' }}>
                     {mod.permissions.map((perm) => {
                       const isGranted = isCompanyAdmin || activePerms.includes(perm.id);
 
@@ -496,32 +460,35 @@ export function RolesPage() {
                           onClick={() => selectedRole && togglePermission(selectedRole.id, perm.id)}
                           style={{
                             padding: '10px 12px',
-                            borderRadius: 8,
-                            background: isGranted ? 'rgba(6, 182, 212, 0.08)' : 'rgba(255, 255, 255, 0.01)',
-                            border: isGranted ? '1px solid rgba(6, 182, 212, 0.25)' : '1px solid rgba(255, 255, 255, 0.04)',
+                            borderRadius: '8px',
+                            background: isGranted ? '#e0f7fc' : '#ffffff',
+                            border: isGranted ? '1px solid #b9eef8' : '1px solid var(--color-border)',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 10,
+                            gap: '10px',
                             cursor: isCompanyAdmin ? 'default' : 'pointer',
+                            transition: 'all 0.15s ease',
                           }}
                         >
                           <div style={{
-                            width: 18,
-                            height: 18,
-                            borderRadius: 4,
-                            background: isGranted ? '#06b6d4' : 'rgba(255,255,255,0.1)',
+                            width: '18px',
+                            height: '18px',
+                            borderRadius: '4px',
+                            background: isGranted ? '#00b8e6' : '#ffffff',
+                            border: isGranted ? 'none' : '1.5px solid #cbd5e1',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: '#fff',
+                            flexShrink: 0,
                           }}>
                             {isGranted && <Check size={12} strokeWidth={3} />}
                           </div>
                           <div>
-                            <div style={{ fontWeight: 600, fontSize: '0.82rem', color: isGranted ? '#f8fafc' : '#94a3b8' }}>
+                            <div style={{ fontWeight: '700', fontSize: '0.82rem', color: isGranted ? '#007fa3' : '#334155' }}>
                               {perm.name}
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                            <div style={{ fontSize: '0.73rem', color: '#64748b' }}>
                               {perm.description}
                             </div>
                           </div>
@@ -536,66 +503,61 @@ export function RolesPage() {
         </div>
       </div>
 
-      {/* Role Create/Edit Modal */}
+      {/* Modal Dialog */}
       {modal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999,
-          padding: 16,
-        }}>
-          <div style={{
-            width: '100%',
-            maxWidth: 440,
-            background: '#0f172a',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: 16,
-            padding: 24,
-            boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>
-                {modal === 'create' ? 'Create Custom Role' : 'Edit Role Details'}
+        <div className={s.modalOverlay}>
+          <div className={s.modalContent} style={{ maxWidth: '480px' }}>
+            <div className={s.modalHeader}>
+              <h2 className={s.modalTitle}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, rgba(0, 184, 230, 0.15), rgba(56, 189, 248, 0.25))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#0088bb',
+                }}>
+                  <ShieldCheck size={18} />
+                </div>
+                <span>{modal === 'create' ? 'Create Custom Role' : `Edit Role: ${form.name || 'Role'}`}</span>
               </h2>
-              <button onClick={() => setModal(null)} style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}>
-                <X size={18} />
+              <button onClick={() => setModal(null)} className={s.modalClose}>
+                <X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveRoleModal} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <form onSubmit={handleSaveRoleModal} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: 4 }}>Role Name *</label>
+                <label className={s.label}>Role Name *</label>
                 <input
                   type="text"
                   placeholder="e.g. Quality Auditor"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: errors.name ? '1px solid #ef4444' : '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#fff', outline: 'none' }}
+                  className={s.input}
+                  style={errors.name ? { borderColor: '#ef4444' } : {}}
                 />
-                {errors.name && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{errors.name}</span>}
+                {errors.name && <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.name}</span>}
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: 4 }}>Description</label>
+                <label className={s.label}>Description</label>
                 <textarea
-                  placeholder="Brief summary of duties..."
+                  placeholder="Brief summary of privileges..."
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={3}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#fff', outline: 'none', resize: 'none' }}
+                  className={s.textarea}
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 12 }}>
-                <button type="button" onClick={() => setModal(null)} style={{ padding: '10px 16px', borderRadius: 8, background: 'rgba(255,255,255,0.06)', color: '#94a3b8', border: 'none', cursor: 'pointer' }}>
+              <div className={s.modalActions} style={{ margin: '8px -24px -24px -24px', padding: '16px 24px', background: '#f8fcfe', borderTop: '1px solid #f1f5f9' }}>
+                <button type="button" onClick={() => setModal(null)} className={`${s.btn} ${s.btnSecondary}`}>
                   Cancel
                 </button>
-                <button type="submit" disabled={saving} style={{ padding: '10px 20px', borderRadius: 8, background: 'linear-gradient(135deg, #06b6d4, #3b82f6)', color: '#fff', border: 'none', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}>
+                <button type="submit" disabled={saving} className={`${s.btn} ${s.btnPrimary}`}>
                   {saving ? 'Saving...' : modal === 'create' ? 'Create Role' : 'Save Changes'}
                 </button>
               </div>

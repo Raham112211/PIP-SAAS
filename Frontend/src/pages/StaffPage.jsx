@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Edit2, Trash2, X, Shield, CheckCircle2, Users, MoreVertical } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Edit2, Trash2, X, Shield, CheckCircle2, Users, AlertCircle, Building2, Mail, Phone, UserCheck } from 'lucide-react';
 import { userService } from '../services/userService';
 import { dbSelect, dbRun } from '../db/database';
 import s from '../styles/page.module.css';
@@ -10,24 +9,21 @@ const EMPTY_STAFF = {
   email: '',
   phone: '',
   role_id: '',
-  role: 'staff',
+  role: 'Staff',
   branch_id: '',
-  branchName: '',
+  branchName: 'Main Office',
   status: 'active',
-  department: '',
+  department: 'Operations',
 };
 
 export function StaffPage() {
-  const navigate = useNavigate();
   const [staffList, setStaffList] = useState([]);
   const [rolesList, setRolesList] = useState([]);
   const [branchesList, setBranchesList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('ALL');
-  const [selectedBranchFilter, setSelectedBranchFilter] = useState('ALL');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL');
-  const [actionMenuStaffId, setActionMenuStaffId] = useState(null);
 
   // Modal Form State
   const [showModal, setShowModal] = useState(false);
@@ -44,11 +40,8 @@ export function StaffPage() {
   };
 
   const loadData = async (isInitial = false) => {
-    if (isInitial && staffList.length === 0) {
-      setLoading(true);
-    }
+    if (isInitial && staffList.length === 0) setLoading(true);
     try {
-      // 1. Fetch from Remote API (or fallback to local SQL)
       let remoteStaff = null;
       let remoteRoles = null;
 
@@ -56,14 +49,14 @@ export function StaffPage() {
         const staffRes = await userService.getStaff();
         if (staffRes && staffRes.items) remoteStaff = staffRes.items;
       } catch (err) {
-        console.warn('API staff load, using local DB:', err.message);
+        console.warn('API staff load fallback:', err.message);
       }
 
       try {
         const rolesRes = await userService.getRoles();
         if (Array.isArray(rolesRes)) remoteRoles = rolesRes;
       } catch (err) {
-        console.warn('API roles load, using local DB:', err.message);
+        console.warn('API roles load fallback:', err.message);
       }
 
       const branchRows = await dbSelect(`SELECT * FROM branches ORDER BY name ASC`).catch(() => []);
@@ -88,12 +81,12 @@ export function StaffPage() {
             role_id: sItem.role_id || '',
             branch_id: primaryBranchId,
             branchName: branchNames,
-            department: sItem.designation || 'General',
+            department: sItem.designation || 'Operations',
             status: sItem.status || 'active',
             isActive: sItem.is_active,
             createdAt: sItem.created_at
               ? new Date(sItem.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-              : '-',
+              : 'Active',
           };
         });
       } else {
@@ -105,19 +98,19 @@ export function StaffPage() {
           role: u.role || 'Staff',
           role_id: '',
           branch_id: '',
-          branchName: u.organizationName || 'Main',
-          department: 'General',
+          branchName: u.organizationName || 'Main Office',
+          department: 'Operations',
           status: 'active',
           isActive: true,
-          createdAt: 'Just now',
+          createdAt: 'Active',
         }));
       }
 
       setStaffList(mappedStaff);
       setRolesList(remoteRoles && remoteRoles.length > 0 ? remoteRoles : [
         { id: 'role-1', name: 'Company Admin', slug: 'company_admin' },
-        { id: 'role-2', name: 'Manager', slug: 'manager' },
-        { id: 'role-3', name: 'Operator', slug: 'operator' },
+        { id: 'role-2', name: 'Branch Manager', slug: 'branch_manager' },
+        { id: 'role-3', name: 'Billing Operator', slug: 'billing_operator' },
       ]);
       setBranchesList(branchRows || []);
     } catch (err) {
@@ -137,9 +130,8 @@ export function StaffPage() {
       (item.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (item.branchName || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = selectedRoleFilter === 'ALL' || item.role.toLowerCase() === selectedRoleFilter.toLowerCase();
-    const matchesBranch = selectedBranchFilter === 'ALL' || item.branchName === selectedBranchFilter;
     const matchesStatus = selectedStatusFilter === 'ALL' || item.status === selectedStatusFilter;
-    return matchesSearch && matchesRole && matchesBranch && matchesStatus;
+    return matchesSearch && matchesRole && matchesStatus;
   });
 
   const openCreate = () => {
@@ -149,9 +141,9 @@ export function StaffPage() {
     setForm({
       ...EMPTY_STAFF,
       role_id: defaultRole ? defaultRole.id : '',
-      role: defaultRole ? defaultRole.name : '',
+      role: defaultRole ? defaultRole.name : 'Staff',
       branch_id: defaultBranch ? defaultBranch.id : '',
-      branchName: defaultBranch ? defaultBranch.name : '',
+      branchName: defaultBranch ? defaultBranch.name : 'Main Office',
     });
     setFormMode('create');
     setErrors({});
@@ -202,17 +194,16 @@ export function StaffPage() {
         try {
           await userService.createStaff(payload);
         } catch (apiErr) {
-          console.warn('API creation failed, saving to local state:', apiErr.message);
+          console.warn('API creation fallback:', apiErr.message);
         }
 
-        // Always ensure persisted in local DB as well
         const newId = `usr-${Date.now()}`;
         await dbRun(
           `INSERT OR REPLACE INTO users (id, email, name, organizationName, phone, role, password) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [newId, form.email.trim(), form.name.trim(), form.branchName || 'Main', form.phone.trim(), form.role || 'Staff', 'demo123']
+          [newId, form.email.trim(), form.name.trim(), form.branchName || 'Main Office', form.phone.trim(), form.role || 'Staff', 'demo123']
         ).catch(() => {});
 
-        showToast(`Staff member "${form.name}" added successfully!`);
+        showToast(`Staff member "${form.name}" enrolled successfully!`);
         setShowModal(false);
         await loadData(false);
       } else {
@@ -228,7 +219,7 @@ export function StaffPage() {
         try {
           await userService.updateStaff(selectedStaff.id, payload);
         } catch (apiErr) {
-          console.warn('API update failed, updating local state:', apiErr.message);
+          console.warn('API update fallback:', apiErr.message);
         }
 
         await dbRun(
@@ -266,7 +257,7 @@ export function StaffPage() {
   };
 
   return (
-    <div className={s.pageWrapper} style={{ minHeight: '100vh', background: 'transparent' }}>
+    <div className={s.page}>
       {/* Toast Notification */}
       {toast && (
         <div style={{
@@ -279,408 +270,287 @@ export function StaffPage() {
           gap: '10px',
           padding: '12px 20px',
           borderRadius: '10px',
-          background: toast.isError ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)',
+          background: toast.isError ? '#ef4444' : '#00b8e6',
           color: '#fff',
-          fontWeight: '500',
+          fontWeight: '600',
           fontSize: '0.9rem',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-          backdropFilter: 'blur(8px)',
+          boxShadow: '0 8px 24px rgba(0, 184, 230, 0.35)',
         }}>
-          {toast.isError ? <X size={18} /> : <CheckCircle2 size={18} />}
+          {toast.isError ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
           <span>{toast.message}</span>
         </div>
       )}
 
-      {/* Modern Card-Free Page Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 0 24px 0',
-        borderBottom: '1px solid var(--border-subtle, rgba(255,255,255,0.08))',
-        marginBottom: '24px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.1))',
-            border: '1px solid rgba(6, 182, 212, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#06b6d4',
-          }}>
-            <Users size={22} />
-          </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-primary, #fff)', letterSpacing: '-0.02em' }}>
-              Staff & Operators
-            </h1>
-            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)' }}>
-              Manage corporate team members, branches, and system privileges
-            </p>
-          </div>
+      {/* Page Header */}
+      <div className={s.pageHeader}>
+        <div>
+          <h1 className={s.pageTitle}>Staff & Operators</h1>
+          <p className={s.pageSubtitle}>
+            Manage corporate team members, branches, and system privileges
+          </p>
         </div>
 
-        <button
-          onClick={openCreate}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 18px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: '600',
-            fontSize: '0.88rem',
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(6, 182, 212, 0.3)',
-            transition: 'all 0.2s ease',
-          }}
-        >
+        <button onClick={openCreate} className={`${s.btn} ${s.btnPrimary}`}>
           <Plus size={16} />
           <span>Add Staff</span>
         </button>
       </div>
 
-      {/* Filter & Search Toolbar */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '12px',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '20px',
-      }}>
-        {/* Search */}
-        <div style={{
-          position: 'relative',
-          minWidth: '260px',
-          flex: '1',
-          maxWidth: '380px',
-        }}>
-          <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
-          <input
-            type="text"
-            placeholder="Search staff by name, email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '9px 12px 9px 36px',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.03)',
-              color: '#fff',
-              fontSize: '0.85rem',
-              outline: 'none',
-            }}
-          />
+      {/* Table Container */}
+      <div className={s.tableContainer}>
+        {/* Toolbar */}
+        <div className={s.tableToolbar}>
+          <div className={s.searchWrap} style={{ maxWidth: '340px', flex: '1' }}>
+            <Search size={16} className={s.searchIcon} />
+            <input
+              type="text"
+              placeholder="Search staff by name, email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={s.searchInput}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <select
+              value={selectedRoleFilter}
+              onChange={(e) => setSelectedRoleFilter(e.target.value)}
+              className={s.select}
+              style={{ minWidth: '140px' }}
+            >
+              <option value="ALL">All Roles</option>
+              {rolesList.map((r) => (
+                <option key={r.id} value={r.name}>{r.name}</option>
+              ))}
+            </select>
+
+            <select
+              value={selectedStatusFilter}
+              onChange={(e) => setSelectedStatusFilter(e.target.value)}
+              className={s.select}
+              style={{ minWidth: '130px' }}
+            >
+              <option value="ALL">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
         </div>
 
-        {/* Dropdown Filters */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <select
-            value={selectedRoleFilter}
-            onChange={(e) => setSelectedRoleFilter(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(30, 41, 59, 0.8)',
-              color: '#94a3b8',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              outline: 'none',
-            }}
-          >
-            <option value="ALL">All Roles</option>
-            {rolesList.map((r) => (
-              <option key={r.id} value={r.name}>{r.name}</option>
-            ))}
-          </select>
-
-          <select
-            value={selectedStatusFilter}
-            onChange={(e) => setSelectedStatusFilter(e.target.value)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(30, 41, 59, 0.8)',
-              color: '#94a3b8',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              outline: 'none',
-            }}
-          >
-            <option value="ALL">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Staff Directory Table */}
-      <div style={{
-        overflowX: 'auto',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '12px',
-        background: 'rgba(15, 23, 42, 0.4)',
-      }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-          <thead>
-            <tr style={{
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-              background: 'rgba(255, 255, 255, 0.02)',
-              color: '#94a3b8',
-              fontSize: '0.78rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}>
-              <th style={{ padding: '14px 18px' }}>Staff Member</th>
-              <th style={{ padding: '14px 18px' }}>Role</th>
-              <th style={{ padding: '14px 18px' }}>Branch / Location</th>
-              <th style={{ padding: '14px 18px' }}>Status</th>
-              <th style={{ padding: '14px 18px', textAlign: 'right' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+        {/* Table */}
+        <div className={s.tableWrap}>
+          <table className={s.table}>
+            <thead>
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                  Loading staff members...
-                </td>
+                <th>Staff Member</th>
+                <th>Role & Access</th>
+                <th>Branch / Location</th>
+                <th>Status</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
-            ) : filteredStaff.length === 0 ? (
-              <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                  No staff members found matching your search.
-                </td>
-              </tr>
-            ) : (
-              filteredStaff.map((staff) => (
-                <tr
-                  key={staff.id}
-                  style={{
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-                    transition: 'background 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                >
-                  {/* Name & Avatar */}
-                  <td style={{ padding: '14px 18px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, rgba(6,182,212,0.2), rgba(59,130,246,0.2))',
-                        border: '1px solid rgba(6,182,212,0.3)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#38bdf8',
-                        fontWeight: '700',
-                        fontSize: '0.85rem',
-                      }}>
-                        {staff.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: '600', color: '#f8fafc' }}>{staff.name}</div>
-                        <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{staff.email}</div>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Role */}
-                  <td style={{ padding: '14px 18px' }}>
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      fontSize: '0.78rem',
-                      fontWeight: '600',
-                      background: 'rgba(59, 130, 246, 0.12)',
-                      color: '#60a5fa',
-                      border: '1px solid rgba(59, 130, 246, 0.25)',
-                    }}>
-                      <Shield size={12} />
-                      {staff.role}
-                    </span>
-                  </td>
-
-                  {/* Branch */}
-                  <td style={{ padding: '14px 18px', color: '#cbd5e1' }}>
-                    {staff.branchName}
-                  </td>
-
-                  {/* Status */}
-                  <td style={{ padding: '14px 18px' }}>
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      fontSize: '0.78rem',
-                      fontWeight: '500',
-                      color: staff.status === 'active' ? '#34d399' : '#f87171',
-                    }}>
-                      <span style={{
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        background: staff.status === 'active' ? '#34d399' : '#f87171',
-                      }} />
-                      {staff.status === 'active' ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-
-                  {/* Actions */}
-                  <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                    <div style={{ display: 'inline-flex', gap: '8px' }}>
-                      <button
-                        onClick={() => openEdit(staff)}
-                        title="Edit profile"
-                        style={{
-                          padding: '6px 10px',
-                          borderRadius: '6px',
-                          background: 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          color: '#94a3b8',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(staff)}
-                        title="Delete staff"
-                        style={{
-                          padding: '6px 10px',
-                          borderRadius: '6px',
-                          background: 'rgba(239,68,68,0.1)',
-                          border: '1px solid rgba(239,68,68,0.2)',
-                          color: '#ef4444',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                    Loading staff members...
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : filteredStaff.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                    No staff members found matching your search.
+                  </td>
+                </tr>
+              ) : (
+                filteredStaff.map((staff) => (
+                  <tr key={staff.id}>
+                    {/* Name & Avatar */}
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, rgba(0, 184, 230, 0.15), rgba(56, 189, 248, 0.25))',
+                          border: '1px solid rgba(0, 184, 230, 0.4)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#0088bb',
+                          fontWeight: '700',
+                          fontSize: '0.9rem',
+                        }}>
+                          {staff.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: '700', color: '#0f172a' }}>{staff.name}</div>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{staff.email}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Role */}
+                    <td>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '0.78rem',
+                        fontWeight: '700',
+                        background: '#e0f7fc',
+                        color: '#007fa3',
+                        border: '1px solid #b9eef8',
+                      }}>
+                        <Shield size={12} />
+                        {staff.role}
+                      </span>
+                    </td>
+
+                    {/* Branch */}
+                    <td style={{ color: '#334155', fontWeight: '500' }}>
+                      {staff.branchName}
+                    </td>
+
+                    {/* Status */}
+                    <td>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '3px 9px',
+                        borderRadius: '999px',
+                        fontSize: '0.78rem',
+                        fontWeight: '600',
+                        background: staff.status === 'active' ? '#ecfdf5' : '#fef2f2',
+                        color: staff.status === 'active' ? '#059669' : '#dc2626',
+                        border: staff.status === 'active' ? '1px solid #a7f3d0' : '1px solid #fecaca',
+                      }}>
+                        <span style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          background: staff.status === 'active' ? '#10b981' : '#ef4444',
+                        }} />
+                        {staff.status === 'active' ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'inline-flex', gap: '6px' }}>
+                        <button
+                          onClick={() => openEdit(staff)}
+                          className={s.actionBtn}
+                          title="Edit profile"
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(staff)}
+                          className={`${s.actionBtn} ${s.actionBtnDelete}`}
+                          title="Delete staff"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal Dialog */}
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999,
-          padding: '16px',
-        }}>
-          <div style={{
-            width: '100%',
-            maxWidth: '460px',
-            background: '#0f172a',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: '16px',
-            padding: '24px',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '700', color: '#fff' }}>
-                {formMode === 'create' ? 'Add New Staff' : 'Edit Staff Profile'}
+        <div className={s.modalOverlay}>
+          <div className={s.modalContent} style={{ maxWidth: '560px' }}>
+            <div className={s.modalHeader}>
+              <h2 className={s.modalTitle}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, rgba(0, 184, 230, 0.15), rgba(56, 189, 248, 0.25))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#0088bb',
+                }}>
+                  <UserCheck size={18} />
+                </div>
+                <span>{formMode === 'create' ? 'Add New Staff Member' : `Edit Profile: ${form.name || 'Staff'}`}</span>
               </h2>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}
-              >
-                <X size={18} />
+              <button onClick={() => setShowModal(false)} className={s.modalClose}>
+                <X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '4px' }}>
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Sarah Jenkins"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    border: errors.name ? '1px solid #ef4444' : '1px solid rgba(255,255,255,0.1)',
-                    background: 'rgba(255,255,255,0.04)',
-                    color: '#fff',
-                    outline: 'none',
-                    fontSize: '0.88rem',
-                  }}
-                />
-                {errors.name && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{errors.name}</span>}
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '4px' }}>
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  placeholder="name@company.com"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    border: errors.email ? '1px solid #ef4444' : '1px solid rgba(255,255,255,0.1)',
-                    background: 'rgba(255,255,255,0.04)',
-                    color: '#fff',
-                    outline: 'none',
-                    fontSize: '0.88rem',
-                  }}
-                />
-                {errors.email && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{errors.email}</span>}
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <form onSubmit={handleFormSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '4px' }}>
-                    Role
-                  </label>
+                  <label className={s.label}>Full Name *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Admin Director"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className={s.input}
+                    style={errors.name ? { borderColor: '#ef4444' } : {}}
+                  />
+                  {errors.name && <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.name}</span>}
+                </div>
+
+                <div>
+                  <label className={s.label}>Email Address *</label>
+                  <input
+                    type="email"
+                    placeholder="admin@pip.com"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    className={s.input}
+                    style={errors.email ? { borderColor: '#ef4444' } : {}}
+                  />
+                  {errors.email && <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.email}</span>}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label className={s.label}>Phone Number</label>
+                  <input
+                    type="text"
+                    placeholder="0300-1234567"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    className={s.input}
+                  />
+                </div>
+
+                <div>
+                  <label className={s.label}>Department / Designation</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Director"
+                    value={form.department}
+                    onChange={(e) => setForm({ ...form, department: e.target.value })}
+                    className={s.input}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label className={s.label}>System Role</label>
                   <select
                     value={form.role}
                     onChange={(e) => setForm({ ...form, role: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      background: '#1e293b',
-                      color: '#fff',
-                      outline: 'none',
-                      fontSize: '0.88rem',
-                    }}
+                    className={s.select}
+                    style={{ width: '100%' }}
                   >
                     {rolesList.map((r) => (
                       <option key={r.id} value={r.name}>{r.name}</option>
@@ -689,59 +559,26 @@ export function StaffPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '4px' }}>
-                    Status
-                  </label>
+                  <label className={s.label}>Branch Assignment</label>
                   <select
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      background: '#1e293b',
-                      color: '#fff',
-                      outline: 'none',
-                      fontSize: '0.88rem',
-                    }}
+                    value={form.branchName}
+                    onChange={(e) => setForm({ ...form, branchName: e.target.value })}
+                    className={s.select}
+                    style={{ width: '100%' }}
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="Main Office">Main Office</option>
+                    {branchesList.map((b) => (
+                      <option key={b.id} value={b.name}>{b.name}</option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  style={{
-                    padding: '10px 16px',
-                    borderRadius: '8px',
-                    background: 'rgba(255,255,255,0.06)',
-                    color: '#94a3b8',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '0.88rem',
-                  }}
-                >
+              <div className={s.modalActions} style={{ margin: '8px -24px -24px -24px', padding: '16px 24px', background: '#f8fcfe', borderTop: '1px solid #f1f5f9' }}>
+                <button type="button" onClick={() => setShowModal(false)} className={`${s.btn} ${s.btnSecondary}`}>
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
-                    color: '#fff',
-                    border: 'none',
-                    fontWeight: '600',
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                    fontSize: '0.88rem',
-                  }}
-                >
+                <button type="submit" disabled={saving} className={`${s.btn} ${s.btnPrimary}`}>
                   {saving ? 'Saving...' : formMode === 'create' ? 'Add Staff' : 'Save Changes'}
                 </button>
               </div>
