@@ -1,6 +1,7 @@
 import os
 from typing import Generator
 from sqlalchemy import create_engine, event
+from sqlalchemy.pool import StaticPool
 from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import settings
 
@@ -9,22 +10,26 @@ is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNC
 
 # Production-Grade Engine Configuration
 if is_sqlite:
-    engine = create_engine(
-        settings.DATABASE_URL,
-        connect_args={"check_same_thread": False, "timeout": 60},
-        pool_pre_ping=True,
-    )
+    if is_serverless:
+        # On Serverless, StaticPool with check_same_thread=False prevents database locking
+        engine = create_engine(
+            settings.DATABASE_URL,
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+    else:
+        engine = create_engine(
+            settings.DATABASE_URL,
+            connect_args={"check_same_thread": False, "timeout": 60},
+            pool_pre_ping=True,
+        )
 
-    # Serverless SQLite Pragmas (MEMORY mode for serverless to prevent Lambda /tmp locking)
-    @event.listens_for(engine, "connect")
-    def set_sqlite_pragma(dbapi_connection, connection_record):
-        cursor = dbapi_connection.cursor()
-        if is_serverless:
-            cursor.execute("PRAGMA journal_mode=MEMORY")
-        else:
+        @event.listens_for(engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA journal_mode=WAL")
-        cursor.execute("PRAGMA synchronous=NORMAL")
-        cursor.close()
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.close()
 else:
     # Production PostgreSQL Connection Pool
     engine = create_engine(
