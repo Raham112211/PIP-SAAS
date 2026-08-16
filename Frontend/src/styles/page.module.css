@@ -32,21 +32,6 @@
   color: #0f172a;
   letter-spacing: -0.03em;
   font-family: var(--font-heading);
-  position: relative;
-  display: inline-flex;
-  flex-direction: column;
-}
-
-/* Signature ClearCredit Cyan Accent Underline */
-.pageTitle::after {
-  content: '';
-  display: block;
-  width: 48px;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-accent) 0%, #38bdf8 100%);
-  border-radius: 999px;
-  margin-top: 4px;
-  box-shadow: 0 0 10px rgba(0, 184, 230, 0.5);
 }
 
 .pageSubtitle {
@@ -56,26 +41,23 @@
   font-weight: 500;
 }
 
-/* ── Fluid Cards with Ambient Cyan Shade Highlights ────────── */
+/* ── Clean Pure Fluid Cards ─────────────────────────── */
 .card {
-  background: radial-gradient(circle at 98% 2%, rgba(0, 194, 235, 0.08) 0%, rgba(240, 253, 255, 0.2) 40%, transparent 70%), #ffffff;
+  background: #ffffff;
   border: 1px solid var(--color-border);
-  border-top: 2.5px solid rgba(0, 184, 230, 0.5);
   border-radius: var(--radius-md);
   padding: clamp(16px, 2vw, 24px);
   margin-bottom: clamp(14px, 2vw, 20px);
-  box-shadow: var(--shadow-sm);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
   width: 100%;
   box-sizing: border-box;
   position: relative;
-  overflow: hidden;
 }
 
 .card:hover {
-  border-color: #a5f3fc;
-  border-top-color: var(--color-accent);
-  box-shadow: 0 8px 25px rgba(0, 184, 230, 0.12);
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .cardTitle {
@@ -222,13 +204,12 @@
 .btnSuccess { background: var(--color-success); color: #fff; }
 .btnSuccess:hover:not(:disabled) { background: #059669; }
 
-/* ── 100% Fluid Dynamic Table Container with Glowing Top Line ────── */
+/* ── Clean Fluid Table Container ──────────────────────────────────── */
 .tableContainer {
   border: 1px solid var(--color-border);
-  border-top: 3px solid var(--color-accent);
   border-radius: var(--radius-md);
   background: #ffffff;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   display: flex;
   flex-direction: column;

@@ -1,23 +1,23 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Plus, Shield, Edit2, Trash2, X, Lock, Check, CheckCircle2,
   ShieldCheck, Zap, GitBranch, Users, FileText, Settings, Key,
-  AlertCircle, Save, Wifi, Activity, LayoutDashboard, Building2,
-  Award, BarChart3, SlidersHorizontal, MoreVertical
+  AlertCircle, Save, Activity, LayoutDashboard, Building2,
+  Award, BarChart3, SlidersHorizontal, Folder
 } from 'lucide-react';
 import { userService } from '../services/userService';
 import s from '../styles/page.module.css';
 
 const MODULE_ICONS = {
-  staff: Users,
-  roles: Shield,
+  dashboard: LayoutDashboard,
+  bills: FileText,
   branches: GitBranch,
   connections: Zap,
-  bills: FileText,
-  scraper: Activity,
   reports: BarChart3,
+  staff: Users,
+  roles: Shield,
   settings: SlidersHorizontal,
-  dashboard: LayoutDashboard,
+  scraper: Activity,
   organization: Building2,
   licence: Award,
 };
@@ -25,49 +25,60 @@ const MODULE_ICONS = {
 const DEFAULT_MODULE_CATALOG = [
   {
     module: 'dashboard',
-    name: 'Dashboard',
+    name: 'Dashboard & Analytics',
+    description: 'Executive summaries, real-time KPI metrics, and consumption overview',
     permissions: [
-      { id: 'perm-dash-view', slug: 'dashboard.view', name: 'View Overview & Analytics', description: 'Access main KPI summaries and analytics.' },
-    ],
-  },
-  {
-    module: 'staff',
-    name: 'Staff & Team',
-    permissions: [
-      { id: 'perm-staff-view', slug: 'staff.view', name: 'View Staff Directory', description: 'Browse active staff members and details.' },
-      { id: 'perm-staff-manage', slug: 'staff.manage', name: 'Add & Edit Staff', description: 'Create, update, and manage team privileges.' },
-    ],
-  },
-  {
-    module: 'roles',
-    name: 'Roles & Privileges',
-    permissions: [
-      { id: 'perm-roles-view', slug: 'roles.view', name: 'View System Roles', description: 'List corporate roles and granted privileges.' },
-      { id: 'perm-roles-manage', slug: 'roles.manage', name: 'Create & Modify Roles', description: 'Configure granular permission sets.' },
-    ],
-  },
-  {
-    module: 'branches',
-    name: 'Branches',
-    permissions: [
-      { id: 'perm-branch-view', slug: 'branches.view', name: 'View Branches', description: 'Browse corporate branch network.' },
-      { id: 'perm-branch-manage', slug: 'branches.manage', name: 'Manage Branches', description: 'Create and assign branches.' },
+      { id: 'perm-dash-view', slug: 'dashboard.view', name: 'View Overview & Analytics', description: 'Access KPI summaries, revenue statistics, and live charts' },
     ],
   },
   {
     module: 'bills',
-    name: 'Bill Operations',
+    name: 'Bills & Invoicing',
+    description: 'Utility invoices, PDF statement downloads, ledgers, and billing operations',
     permissions: [
-      { id: 'perm-bills-view', slug: 'bills.view', name: 'View Consumer Invoices', description: 'Access consumer bill ledger.' },
-      { id: 'perm-bills-manage', slug: 'bills.manage', name: 'Edit & Process Bills', description: 'Modify and verify financial records.' },
+      { id: 'perm-bills-view', slug: 'bills.view', name: 'View Consumer Invoices', description: 'Access consumer billing ledger and account summaries' },
+      { id: 'perm-bills-download', slug: 'bills.download', name: 'Download PDF Bills', description: 'Download original PDF billing statements and verified receipts' },
+      { id: 'perm-bills-export', slug: 'bills.export', name: 'Export Billing Data', description: 'Export monthly billing spreadsheets to Excel or CSV' },
+      { id: 'perm-bills-manage', slug: 'bills.manage', name: 'Edit & Process Bills', description: 'Modify billing amounts, record payments, and verify ledger' },
+    ],
+  },
+  {
+    module: 'branches',
+    name: 'Branch Management',
+    description: 'Corporate branch network, node creation, addresses, and office management',
+    permissions: [
+      { id: 'perm-branch-view', slug: 'branches.view', name: 'View Branches', description: 'Browse corporate branch network locations and metrics' },
+      { id: 'perm-branch-create', slug: 'branches.create', name: 'Create Branch', description: 'Register new regional corporate branch offices' },
+      { id: 'perm-branch-edit', slug: 'branches.edit', name: 'Edit Branch Info', description: 'Update branch configuration, address, and manager details' },
+      { id: 'perm-branch-delete', slug: 'branches.delete', name: 'Delete Branch', description: 'Remove inactive branch records and consumer assignments' },
+    ],
+  },
+  {
+    module: 'connections',
+    name: 'Utility Connections & Meters',
+    description: 'Consumer utility meters, DISCO reference accounts, and tariff assignments',
+    permissions: [
+      { id: 'perm-conn-view', slug: 'connections.view', name: 'View Connections', description: 'View consumer meters, reference IDs, and connection details' },
+      { id: 'perm-conn-add', slug: 'connections.add', name: 'Add Connection', description: 'Register new consumer connections and utility meters' },
+      { id: 'perm-conn-edit', slug: 'connections.edit', name: 'Edit Connection', description: 'Update reference numbers, consumer IDs, and tariffs' },
     ],
   },
   {
     module: 'reports',
-    name: 'Financial Reports',
+    name: 'Audit & Financial Reports',
+    description: 'Tax compliance audits, analytical spreadsheets, and monthly financial summaries',
     permissions: [
-      { id: 'perm-reports-view', slug: 'reports.view', name: 'View Reports', description: 'Generate audit and tax summaries.' },
-      { id: 'perm-reports-export', slug: 'reports.export', name: 'Export to Excel', description: 'Download analytical reports.' },
+      { id: 'perm-reports-view', slug: 'reports.view', name: 'View Reports & Graphs', description: 'Generate audit summaries, consumption graphs, and trends' },
+      { id: 'perm-reports-export', slug: 'reports.export', name: 'Export Audit Reports', description: 'Download comprehensive financial and utility audit spreadsheets' },
+    ],
+  },
+  {
+    module: 'staff',
+    name: 'Staff & Team Directory',
+    description: 'Corporate staff operators, permissions assignments, and profile privileges',
+    permissions: [
+      { id: 'perm-staff-view', slug: 'staff.view', name: 'View Staff Directory', description: 'Browse active corporate staff members and assignees' },
+      { id: 'perm-staff-manage', slug: 'staff.manage', name: 'Manage Staff Profiles', description: 'Create, update profiles, and assign branches or roles to staff' },
     ],
   },
 ];
@@ -90,9 +101,9 @@ export function RolesPage() {
   const [rolePermissionsMap, setRolePermissionsMap] = useState({
     'role-1': DEFAULT_MODULE_CATALOG.flatMap((m) => m.permissions.map((p) => p.id)),
     'role-2': ['perm-dash-view', 'perm-staff-view', 'perm-branch-view', 'perm-bills-view', 'perm-reports-view'],
-    'role-3': ['perm-dash-view', 'perm-bills-view', 'perm-bills-manage', 'perm-reports-view'],
+    'role-3': ['perm-dash-view', 'perm-bills-view', 'perm-bills-download', 'perm-reports-view'],
   });
-  const [modal, setModal] = useState(null); // 'create' | 'edit' | null
+  const [modal, setModal] = useState(null);
   const [form, setForm] = useState(EMPTY_ROLE_FORM);
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState(null);
@@ -326,11 +337,11 @@ export function RolesPage() {
       </div>
 
       {/* 2-Column Responsive Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 320px) 1fr', gap: '20px', alignItems: 'start' }}>
-        {/* Left Column: Defined Roles */}
-        <div className={s.card} style={{ margin: 0, padding: '18px' }}>
-          <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '14px', fontFamily: 'var(--font-heading)' }}>
-            Defined Roles ({rolesList.length})
+      <div style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '28px', alignItems: 'start' }}>
+        {/* Left Column: Roles Sidebar */}
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>
+            DEFINED ROLES ({rolesList.length})
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -341,22 +352,24 @@ export function RolesPage() {
                   key={role.id}
                   onClick={() => handleSelectRole(role)}
                   style={{
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    background: isSelected ? '#e0f7fc' : '#f8fafc',
-                    border: isSelected ? '1.5px solid #00b8e6' : '1px solid var(--color-border)',
+                    padding: '14px 16px',
+                    borderRadius: '10px',
+                    background: '#ffffff',
+                    border: isSelected ? '1.5px solid #00b8e6' : '1px solid #e2e8f0',
+                    borderLeft: isSelected ? '4px solid #00b8e6' : '1px solid #e2e8f0',
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     transition: 'all 0.15s ease',
+                    boxShadow: isSelected ? '0 2px 8px rgba(0, 184, 230, 0.08)' : '0 1px 2px rgba(0,0,0,0.02)',
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: '700', fontSize: '0.92rem', color: isSelected ? '#007fa3' : '#0f172a' }}>
+                    <div style={{ fontWeight: '700', fontSize: '13.5px', color: isSelected ? '#0088bb' : '#0f172a' }}>
                       {role.name}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                    <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>
                       {role.is_system ? 'System Default' : 'Custom Role'}
                     </div>
                   </div>
@@ -366,16 +379,16 @@ export function RolesPage() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleOpenEditModal(role); }}
                         className={s.actionBtn}
-                        style={{ width: '28px', height: '28px' }}
+                        style={{ width: '26px', height: '26px' }}
                       >
-                        <Edit2 size={13} />
+                        <Edit2 size={12} />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDeleteRole(role); }}
                         className={`${s.actionBtn} ${s.actionBtnDelete}`}
-                        style={{ width: '28px', height: '28px' }}
+                        style={{ width: '26px', height: '26px' }}
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={12} />
                       </button>
                     </div>
                   )}
@@ -385,16 +398,16 @@ export function RolesPage() {
           </div>
         </div>
 
-        {/* Right Column: Permission Matrix */}
-        <div className={s.card} style={{ margin: 0, padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--color-border)', paddingBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+        {/* Right Column: Module Cards with Informative Headers & 2-Column Toggle Grid */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
             <div>
-              <div style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', fontFamily: 'var(--font-heading)' }}>
+              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#0f172a' }}>
                 Privileges for <span style={{ color: '#0088bb' }}>{selectedRole?.name}</span>
-              </div>
-              <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '3px' }}>
-                {selectedRole?.description || 'Grant or revoke capability permissions across all platform modules'}
-              </div>
+              </h2>
+              <p style={{ margin: '3px 0 0', fontSize: '12.5px', color: '#64748b' }}>
+                {selectedRole?.description || 'Grant or revoke capability permissions for this role'}
+              </p>
             </div>
 
             {!isCompanyAdmin && (
@@ -402,7 +415,7 @@ export function RolesPage() {
                 onClick={savePermissionsToDB}
                 disabled={saving}
                 className={`${s.btn} ${s.btnPrimary}`}
-                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                style={{ padding: '8px 18px', fontSize: '13px' }}
               >
                 <Save size={14} />
                 <span>{saving ? 'Saving...' : 'Save Privileges'}</span>
@@ -410,10 +423,10 @@ export function RolesPage() {
             )}
           </div>
 
-          {/* Module Privileges */}
+          {/* Module Cards Grid */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {moduleCatalog.map((mod) => {
-              const ModIcon = MODULE_ICONS[mod.module] || Shield;
+              const ModIcon = MODULE_ICONS[mod.module] || Folder;
               const modulePermIds = mod.permissions.map((p) => p.id);
               const allChecked = modulePermIds.length > 0 && modulePermIds.every((id) => activePerms.includes(id));
 
@@ -421,16 +434,50 @@ export function RolesPage() {
                 <div
                   key={mod.module}
                   style={{
-                    background: '#f8fcfe',
-                    border: '1px solid #e0f2fe',
-                    borderRadius: '8px',
-                    padding: '14px',
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    padding: '16px 20px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <ModIcon size={16} color="#0088bb" />
-                      <span style={{ fontWeight: '700', fontSize: '0.9rem', color: '#0f172a' }}>{mod.name}</span>
+                  {/* Module Card Header with Logo + Name + Permission Scope Description */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '9px',
+                        background: 'linear-gradient(135deg, rgba(0, 184, 230, 0.12), rgba(56, 189, 248, 0.2))',
+                        color: '#0088bb',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        border: '1px solid rgba(0, 184, 230, 0.25)',
+                      }}>
+                        <ModIcon size={18} />
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a' }}>
+                            {mod.name}
+                          </span>
+                          <span style={{
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            padding: '2px 8px',
+                            borderRadius: '999px',
+                            background: '#f1f5f9',
+                            color: '#475569',
+                          }}>
+                            {mod.permissions.length} Capabilities
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                          {mod.description}
+                        </div>
+                      </div>
                     </div>
 
                     {!isCompanyAdmin && (
@@ -440,7 +487,7 @@ export function RolesPage() {
                           background: 'transparent',
                           border: 'none',
                           color: '#0088bb',
-                          fontSize: '0.78rem',
+                          fontSize: '12px',
                           fontWeight: '700',
                           cursor: 'pointer',
                         }}
@@ -450,7 +497,8 @@ export function RolesPage() {
                     )}
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '10px' }}>
+                  {/* 2-Column Capability Grid with ON/OFF Toggle Switches */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
                     {mod.permissions.map((perm) => {
                       const isGranted = isCompanyAdmin || activePerms.includes(perm.id);
 
@@ -459,38 +507,50 @@ export function RolesPage() {
                           key={perm.id}
                           onClick={() => selectedRole && togglePermission(selectedRole.id, perm.id)}
                           style={{
-                            padding: '10px 12px',
-                            borderRadius: '8px',
-                            background: isGranted ? '#e0f7fc' : '#ffffff',
-                            border: isGranted ? '1px solid #b9eef8' : '1px solid var(--color-border)',
+                            padding: '12px 16px',
+                            borderRadius: '10px',
+                            background: '#ffffff',
+                            border: isGranted ? '1.5px solid #00b8e6' : '1px solid #e2e8f0',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '10px',
+                            justifyContent: 'space-between',
+                            gap: '14px',
                             cursor: isCompanyAdmin ? 'default' : 'pointer',
                             transition: 'all 0.15s ease',
+                            boxShadow: isGranted ? '0 2px 6px rgba(0, 184, 230, 0.08)' : 'none',
                           }}
                         >
-                          <div style={{
-                            width: '18px',
-                            height: '18px',
-                            borderRadius: '4px',
-                            background: isGranted ? '#00b8e6' : '#ffffff',
-                            border: isGranted ? 'none' : '1.5px solid #cbd5e1',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#fff',
-                            flexShrink: 0,
-                          }}>
-                            {isGranted && <Check size={12} strokeWidth={3} />}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: '700', fontSize: '0.82rem', color: isGranted ? '#007fa3' : '#334155' }}>
+                          {/* Left: Capability Info */}
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: '700', fontSize: '13px', color: '#0f172a' }}>
                               {perm.name}
                             </div>
-                            <div style={{ fontSize: '0.73rem', color: '#64748b' }}>
+                            <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', lineHeight: '1.35' }}>
                               {perm.description}
                             </div>
+                          </div>
+
+                          {/* Right: Modern ON/OFF Toggle Switch */}
+                          <div style={{
+                            width: '34px',
+                            height: '18px',
+                            borderRadius: '999px',
+                            background: isGranted ? '#00b8e6' : '#cbd5e1',
+                            position: 'relative',
+                            transition: 'background 0.2s ease',
+                            flexShrink: 0,
+                          }}>
+                            <div style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '50%',
+                              background: '#ffffff',
+                              position: 'absolute',
+                              top: '2px',
+                              left: isGranted ? '18px' : '2px',
+                              transition: 'left 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                            }} />
                           </div>
                         </div>
                       );
@@ -503,7 +563,7 @@ export function RolesPage() {
         </div>
       </div>
 
-      {/* Exact Same Modal Structure as Bills Page */}
+      {/* Matching Modal Structure as Bills Page */}
       {modal && (
         <div className={s.modalBackdrop} onClick={(e) => e.target === e.currentTarget && setModal(null)}>
           <div className={s.modal} style={{ maxWidth: 540 }}>
