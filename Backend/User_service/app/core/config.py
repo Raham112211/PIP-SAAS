@@ -5,10 +5,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import model_validator
 from typing import Optional
 
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
 TMP_DB_PATH = Path(tempfile.gettempdir()) / "pip_saas.db"
-DEFAULT_DB_URL = f"sqlite:///{TMP_DB_PATH.as_posix()}" if is_serverless else f"sqlite:///{(BASE_DIR / 'pip_saas.db').as_posix()}"
+DEFAULT_DB_URL = f"sqlite:///{TMP_DB_PATH.as_posix()}" if is_serverless else f"sqlite:///{(ROOT_DIR / 'pip_saas.db').as_posix()}"
 
 
 class Settings(BaseSettings):
@@ -21,7 +22,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "production"
 
     model_config = SettingsConfigDict(
-        env_file=[str(BASE_DIR / ".env"), ".env"],
+        env_file=[str(ROOT_DIR / ".env"), str(BASE_DIR / ".env"), ".env"],
         extra="ignore"
     )
 
