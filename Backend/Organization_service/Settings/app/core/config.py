@@ -1,18 +1,16 @@
 import os
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import model_validator
 from typing import Optional
 
-# Dynamically resolve Backend root directory for 100% cross-platform compatibility (Windows + Linux + Docker)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent
-DEFAULT_DB_PATH = BASE_DIR / "pip_saas.db"
-DEFAULT_DB_URL = f"sqlite:///{DEFAULT_DB_PATH.as_posix()}"
 
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "PIP SaaS - Organization Service"
     API_V1_STR: str = ""
-    DATABASE_URL: str = DEFAULT_DB_URL
+    DATABASE_URL: str = "sqlite:///./pip_saas.db"
     SECRET_KEY: str = "super-secret-jwt-key-for-pip-saas-2026-production-ready"
     ENVIRONMENT: str = "production"
 
@@ -20,6 +18,13 @@ class Settings(BaseSettings):
         env_file=[str(BASE_DIR / ".env"), ".env"],
         extra="ignore"
     )
+
+    @model_validator(mode="after")
+    def validate_database_url(self):
+        is_vercel = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+        if is_vercel and self.DATABASE_URL.startswith("sqlite"):
+            self.DATABASE_URL = "sqlite:////tmp/pip_saas.db"
+        return self
 
 
 settings = Settings()

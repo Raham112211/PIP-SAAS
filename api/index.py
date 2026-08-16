@@ -18,3 +18,4 @@ from app.main import app
 
 # 3. Export for Vercel Serverless runtime
 app = app
+handler = app
