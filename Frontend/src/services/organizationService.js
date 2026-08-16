@@ -1,7 +1,7 @@
 const BASE_URL =
   import.meta.env.VITE_ORGANIZATION_SERVICE_URL ||
   import.meta.env.VITE_ORG_SERVICE_URL ||
-  'http://localhost:8002';
+  (typeof window !== 'undefined' && window.location.hostname !== 'localhost' ? '/api' : 'http://localhost:8002');
 
 async function request(path, options = {}) {
   let user = null;

@@ -1,4 +1,4 @@
-﻿const BASE_URL = import.meta.env.VITE_USER_SERVICE_URL || 'http://localhost:8001';
+const BASE_URL = import.meta.env.VITE_USER_SERVICE_URL || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' ? '/api' : 'http://localhost:8001');
 
 function getAuthHeaders() {
   let user = null;
