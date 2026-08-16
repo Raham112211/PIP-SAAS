@@ -1,9 +1,11 @@
+import os
 from typing import Generator
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, Session
 from app.core.config import settings
 
 is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
 
 # Production-Grade Engine Configuration
 if is_sqlite:
@@ -13,11 +15,14 @@ if is_sqlite:
         pool_pre_ping=True,
     )
 
-    # Enable WAL mode for high-concurrency multi-service SQLite access
+    # Serverless SQLite Pragmas (MEMORY mode for serverless to prevent Lambda /tmp locking)
     @event.listens_for(engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
         cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA journal_mode=WAL")
+        if is_serverless:
+            cursor.execute("PRAGMA journal_mode=MEMORY")
+        else:
+            cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.close()
 else:

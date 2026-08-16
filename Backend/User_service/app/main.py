@@ -2,6 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import select
 from app.core.config import settings
 from app.core.database import engine, SessionLocal
 from app.core.base import Base
@@ -24,6 +25,12 @@ def init_database_schema():
         Base.metadata.create_all(bind=engine)
         db = SessionLocal()
         try:
+            # Seed default organization
+            org = db.scalars(select(Organization).where(Organization.id == "org-1001")).first()
+            if not org:
+                db.add(Organization(id="org-1001", name="PIP Enterprise Organization", slug="pip-org", status="active"))
+                db.commit()
+
             PermissionRepository.seed_default_permissions(db)
             RoleRepository.seed_default_roles(db)
         finally:
@@ -57,7 +64,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include Routers (Both root and /api prefixes to handle local + Vercel serverless routing seamlessly)
+# Include Routers (Both root and /api prefixes for seamless local + Vercel serverless routing)
 app.include_router(staff_router, prefix=settings.API_V1_STR)
 app.include_router(role_router, prefix=settings.API_V1_STR)
 app.include_router(permission_router, prefix=settings.API_V1_STR)
