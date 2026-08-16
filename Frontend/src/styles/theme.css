@@ -1,0 +1,68 @@
+:root {
+  /* Exact Theme Palette Recommended by User */
+  --color-primary: #0B1324;       /* Deep Navy Sidebar & Header */
+  --color-primary-light: #162035; /* Lighter Deep Navy secondary */
+  
+  /* Brand Accent Color System - Electric Cyan */
+  --color-accent: #08B6E8;        /* Electric Cyan Primary */
+  --color-accent-hover: #0099D1;  /* Primary Dark / Hover */
+  --color-accent-dark: #0099D1;   /* Primary Dark for text */
+  --color-accent-light: #38cdf4;  /* Sky Cyan Highlight */
+  --color-accent-soft: #eefaff;   /* Soft Ice Cyan Surface */
+  --color-accent-border: #b6eafd; /* Soft Ice Cyan Border */
+
+  --grad-cyan-primary: linear-gradient(135deg, #38cdf4 0%, #08B6E8 50%, #0099D1 100%);
+  --grad-cyan-vibrant: linear-gradient(135deg, #08B6E8 0%, #0099D1 100%);
+  --grad-cyan-glow: linear-gradient(135deg, rgba(8, 182, 232, 0.2), rgba(0, 153, 209, 0.08));
+  --grad-cyan-button: linear-gradient(135deg, #08B6E8 0%, #0099D1 100%);
+  --grad-card-glass: linear-gradient(180deg, #FFFFFF 0%, #F7F9FC 100%);
+  --grad-dark-glass: linear-gradient(135deg, rgba(11, 19, 36, 0.95), rgba(22, 32, 53, 0.95));
+  
+  /* Legacy alias mappings for backward compatibility */
+  --grad-orange-primary: linear-gradient(135deg, #38cdf4 0%, #08B6E8 50%, #0099D1 100%);
+  --grad-orange-vibrant: linear-gradient(135deg, #08B6E8 0%, #0099D1 100%);
+  --grad-orange-glow: linear-gradient(135deg, rgba(8, 182, 232, 0.2), rgba(0, 153, 209, 0.08));
+  --shadow-orange: 0 4px 16px rgba(8, 182, 232, 0.35);
+
+  --shadow-cyan: 0 4px 16px rgba(8, 182, 232, 0.35);
+  --shadow-cyan-lg: 0 8px 24px rgba(8, 182, 232, 0.25);
+  --focus-ring: 0 0 0 3px rgba(8, 182, 232, 0.25);
+
+  /* Status Colors */
+  --color-secondary: #0ea5e9;     /* Sky Blue */
+  --color-success: #16A34A;       /* Green */
+  --color-danger: #DC2626;        /* Error Red */
+  --color-warning: #F59E0B;       /* Amber Warning */
+  
+  /* Backgrounds & Surfaces */
+  --color-bg: #F7F9FC;            /* Main Background */
+  --color-surface: #FFFFFF;       /* Pure White Cards */
+  --color-surface-hover: #F0F4F9; /* Card & Row hover */
+  --color-border: #E2E8F0;        /* Subtle Border */
+  
+  /* Typography Colors */
+  --color-text: #111827;          /* Main Text */
+  --color-text-muted: #64748B;    /* Secondary Text */
+  --color-nav-text-inactive: #94A3B8; /* Readable Inactive Nav Links */
+  --color-cta-text: #FFFFFF;      /* Contrast Button Text */
+
+  /* Layout Dimensions */
+  --header-height: 80px;
+  --sidenav-width: 260px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-sans: 'Plus Jakarta Sans', 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
+  --font-size-base: 15px;
+  --font-size-sm: 13px;
+  --font-size-xs: 11.5px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(11, 19, 36, 0.04), 0 1px 2px rgba(11, 19, 36, 0.02);
+  --shadow-md: 0 4px 16px rgba(11, 19, 36, 0.06), 0 2px 4px rgba(11, 19, 36, 0.03);
+  --shadow-lg: 0 10px 30px rgba(11, 19, 36, 0.08), 0 4px 8px rgba(11, 19, 36, 0.04);
+}

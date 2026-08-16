@@ -1,0 +1,108 @@
+.header {
+  height: var(--header-height);
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: relative;
+  z-index: 100;
+  flex-shrink: 0;
+  box-shadow: 0 2px 12px rgba(8, 182, 232, 0.06);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.left, .right { display: flex; align-items: center; gap: 16px; }
+
+.menuBtn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 9px;
+  display: flex;
+  transition: all 0.15s ease;
+}
+.menuBtn:hover { background: #eefaff; border-color: #b6eafd; color: var(--color-accent); }
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.iconBtn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 9px;
+  display: flex;
+  position: relative;
+  transition: all 0.15s ease;
+}
+.iconBtn:hover { background: #eefaff; border-color: #b6eafd; color: var(--color-accent); }
+
+.notificationDot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--color-accent);
+}
+
+.userMenu { position: relative; }
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--grad-cyan-vibrant);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+  box-shadow: var(--shadow-cyan);
+  transition: transform 0.15s ease;
+}
+.avatar:hover { transform: scale(1.05); }
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  min-width: 170px;
+  box-shadow: 0 10px 30px rgba(11, 19, 36, 0.08);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  padding: 12px 18px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dropdownItem:hover { background: #eefaff; color: var(--color-accent-dark); }

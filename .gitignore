@@ -1,0 +1,40 @@
+# Node & Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Python & Backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Databases & Local state
+*.db
+*.sqlite
+*.sqlite3
+pip_saas.db
+pip_saas.db-shm
+pip_saas.db-wal
+test.db
+organization_settings.db
+
+# Environment & Secrets (Keep .env.example, ignore local .env)
+.env
+.env.local
+.env.*.local
+
+# IDEs & System
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

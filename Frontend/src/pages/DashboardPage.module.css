@@ -1,0 +1,129 @@
+.alertBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+  color: #b91c1c;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-bottom: 28px;
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 28px;
+  margin-bottom: 28px;
+  width: 100%;
+}
+
+.row3 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .row2, .row3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.chartCard {
+  min-height: 320px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.scrapingCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.scrapingRing {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scrapingPct {
+  position: absolute;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.scrapingStats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.scrapingStat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.failureList {
+  width: 100%;
+  border-top: 1px solid var(--color-border);
+  padding-top: 14px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.failureItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: var(--font-size-xs);
+}
+
+.failureRef {
+  font-weight: 700;
+  color: var(--color-text);
+  margin-right: 6px;
+}
+
+.failureReason {
+  color: var(--color-text-muted);
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+}
+.activityItem:last-child { border-bottom: none; }
+
+.activityDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotSuccess  { background: var(--color-success); box-shadow: 0 0 6px rgba(16, 185, 129, 0.4); }
+.dotDanger   { background: var(--color-danger); box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+.dotDefault  { background: var(--color-accent); box-shadow: 0 0 6px rgba(245, 158, 11, 0.4); }
+
+.activityMsg { flex: 1; color: var(--color-text); font-weight: 500; }
+.activityTime { color: var(--color-text-muted); font-size: var(--font-size-xs); white-space: nowrap; font-weight: 500; }
