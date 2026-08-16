@@ -1,35 +1,14 @@
 {
-  "version": 2,
-  "buildCommand": "cd Frontend && npm install && npm run build",
+  "buildCommand": "npm install --prefix Frontend && npm run build --prefix Frontend",
   "outputDirectory": "Frontend/dist",
-  "builds": [
+  "rewrites": [
     {
-      "src": "api/index.py",
-      "use": "@vercel/python"
+      "source": "/api/(.*)",
+      "destination": "/api/index.py"
     },
     {
-      "src": "Frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "/Frontend/dist/assets/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/Frontend/dist/index.html"
+      "source": "/((?!api|assets|pip-logo.png|pip-icon.png|Logo-tight.png|Logo-cropped.png|sql-wasm.wasm).*)",
+      "destination": "/index.html"
     }
   ]
 }
