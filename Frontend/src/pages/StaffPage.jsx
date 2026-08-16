@@ -463,123 +463,110 @@ export function StaffPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Integrated Pagination Footer */}
+        <div className={s.tablePagination}>
+          <span>Showing 1 to {filteredStaff.length} of {filteredStaff.length} staff members</span>
+          <div className={s.pageButtons}>
+            <button className={s.pageBtn} disabled>Previous</button>
+            <button className={`${s.pageBtn} ${s.pageBtnActive}`}>1</button>
+            <button className={s.pageBtn} disabled>Next</button>
+          </div>
+        </div>
       </div>
 
-      {/* Modal Dialog */}
+      {/* Exact Same Modal Structure as Bills Page */}
       {showModal && (
-        <div className={s.modalOverlay}>
-          <div className={s.modalContent} style={{ maxWidth: '560px' }}>
+        <div className={s.modalBackdrop} onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
+          <div className={s.modal} style={{ maxWidth: 640 }}>
             <div className={s.modalHeader}>
-              <h2 className={s.modalTitle}>
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  background: 'linear-gradient(135deg, rgba(0, 184, 230, 0.15), rgba(56, 189, 248, 0.25))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#0088bb',
-                }}>
-                  <UserCheck size={18} />
-                </div>
-                <span>{formMode === 'create' ? 'Add New Staff Member' : `Edit Profile: ${form.name || 'Staff'}`}</span>
-              </h2>
-              <button onClick={() => setShowModal(false)} className={s.modalClose}>
-                <X size={16} />
-              </button>
+              <span className={s.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <UserCheck size={20} color="var(--color-accent)" />
+                {formMode === 'create' ? 'Add New Corporate Staff Member' : `Edit Staff Profile: ${form.name || 'Staff'}`}
+              </span>
+              <button className={s.modalClose} onClick={() => setShowModal(false)}><X size={18} /></button>
             </div>
+            <form onSubmit={handleFormSubmit}>
+              <div className={s.modalBody}>
+                <div className={s.form}>
+                  <div className={s.formRow}>
+                    <div className={s.field}>
+                      <label className={s.label}>Full Name *</label>
+                      <input
+                        className={`${s.input} ${errors.name ? s.inputError : ''}`}
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        placeholder="e.g. Admin Director"
+                      />
+                      {errors.name && <span className={s.fieldError}>{errors.name}</span>}
+                    </div>
+                    <div className={s.field}>
+                      <label className={s.label}>Email Address *</label>
+                      <input
+                        type="email"
+                        className={`${s.input} ${errors.email ? s.inputError : ''}`}
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        placeholder="admin@pip.com"
+                      />
+                      {errors.email && <span className={s.fieldError}>{errors.email}</span>}
+                    </div>
+                  </div>
 
-            <form onSubmit={handleFormSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label className={s.label}>Full Name *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Admin Director"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className={s.input}
-                    style={errors.name ? { borderColor: '#ef4444' } : {}}
-                  />
-                  {errors.name && <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.name}</span>}
-                </div>
+                  <div className={s.formRow}>
+                    <div className={s.field}>
+                      <label className={s.label}>Phone Number</label>
+                      <input
+                        className={s.input}
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        placeholder="0300-1234567"
+                      />
+                    </div>
+                    <div className={s.field}>
+                      <label className={s.label}>Department / Designation</label>
+                      <input
+                        className={s.input}
+                        value={form.department}
+                        onChange={(e) => setForm({ ...form, department: e.target.value })}
+                        placeholder="Director / Operations"
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <label className={s.label}>Email Address *</label>
-                  <input
-                    type="email"
-                    placeholder="admin@pip.com"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className={s.input}
-                    style={errors.email ? { borderColor: '#ef4444' } : {}}
-                  />
-                  {errors.email && <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.email}</span>}
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label className={s.label}>Phone Number</label>
-                  <input
-                    type="text"
-                    placeholder="0300-1234567"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className={s.input}
-                  />
-                </div>
-
-                <div>
-                  <label className={s.label}>Department / Designation</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Director"
-                    value={form.department}
-                    onChange={(e) => setForm({ ...form, department: e.target.value })}
-                    className={s.input}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <label className={s.label}>System Role</label>
-                  <select
-                    value={form.role}
-                    onChange={(e) => setForm({ ...form, role: e.target.value })}
-                    className={s.select}
-                    style={{ width: '100%' }}
-                  >
-                    {rolesList.map((r) => (
-                      <option key={r.id} value={r.name}>{r.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className={s.label}>Branch Assignment</label>
-                  <select
-                    value={form.branchName}
-                    onChange={(e) => setForm({ ...form, branchName: e.target.value })}
-                    className={s.select}
-                    style={{ width: '100%' }}
-                  >
-                    <option value="Main Office">Main Office</option>
-                    {branchesList.map((b) => (
-                      <option key={b.id} value={b.name}>{b.name}</option>
-                    ))}
-                  </select>
+                  <div className={s.formRow}>
+                    <div className={s.field}>
+                      <label className={s.label}>System Role *</label>
+                      <select
+                        className={s.select}
+                        value={form.role}
+                        onChange={(e) => setForm({ ...form, role: e.target.value })}
+                      >
+                        {rolesList.map((r) => (
+                          <option key={r.id} value={r.name}>{r.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className={s.field}>
+                      <label className={s.label}>Branch Assignment</label>
+                      <select
+                        className={s.select}
+                        value={form.branchName}
+                        onChange={(e) => setForm({ ...form, branchName: e.target.value })}
+                      >
+                        <option value="Main Office">Main Office</option>
+                        {branchesList.map((br) => (
+                          <option key={br.id} value={br.name}>{br.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div className={s.modalActions} style={{ margin: '8px -24px -24px -24px', padding: '16px 24px', background: '#f8fcfe', borderTop: '1px solid #f1f5f9' }}>
-                <button type="button" onClick={() => setShowModal(false)} className={`${s.btn} ${s.btnSecondary}`}>
-                  Cancel
-                </button>
-                <button type="submit" disabled={saving} className={`${s.btn} ${s.btnPrimary}`}>
-                  {saving ? 'Saving...' : formMode === 'create' ? 'Add Staff' : 'Save Changes'}
+              <div className={s.modalFooter}>
+                <button type="button" className={`${s.btn} ${s.btnSecondary}`} onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className={`${s.btn} ${s.btnPrimary}`} disabled={saving}>
+                  {saving ? 'Saving...' : formMode === 'create' ? 'Save & Enroll Staff' : 'Save Changes'}
                 </button>
               </div>
             </form>

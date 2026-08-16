@@ -120,7 +120,7 @@ export function RolesPage() {
         setModuleCatalog(remoteModules);
       }
     } catch (err) {
-      // Use defaults seamlessly
+      // Handled seamlessly
     }
   };
 
@@ -155,7 +155,7 @@ export function RolesPage() {
 
     setRolePermissionsMap((prev) => {
       const current = prev[roleId] || [];
-      const allSelected = modulePermIds.every((id) => current.includes(id));
+      const allSelected = modulePermIds.length > 0 && modulePermIds.every((id) => current.includes(id));
       const updated = allSelected
         ? current.filter((id) => !modulePermIds.includes(id))
         : Array.from(new Set([...current, ...modulePermIds]));
@@ -503,62 +503,47 @@ export function RolesPage() {
         </div>
       </div>
 
-      {/* Modal Dialog */}
+      {/* Exact Same Modal Structure as Bills Page */}
       {modal && (
-        <div className={s.modalOverlay}>
-          <div className={s.modalContent} style={{ maxWidth: '480px' }}>
+        <div className={s.modalBackdrop} onClick={(e) => e.target === e.currentTarget && setModal(null)}>
+          <div className={s.modal} style={{ maxWidth: 540 }}>
             <div className={s.modalHeader}>
-              <h2 className={s.modalTitle}>
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '8px',
-                  background: 'linear-gradient(135deg, rgba(0, 184, 230, 0.15), rgba(56, 189, 248, 0.25))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#0088bb',
-                }}>
-                  <ShieldCheck size={18} />
-                </div>
-                <span>{modal === 'create' ? 'Create Custom Role' : `Edit Role: ${form.name || 'Role'}`}</span>
-              </h2>
-              <button onClick={() => setModal(null)} className={s.modalClose}>
-                <X size={16} />
-              </button>
+              <span className={s.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <ShieldCheck size={20} color="var(--color-accent)" />
+                {modal === 'create' ? 'Create Custom Corporate Role' : `Edit Role: ${form.name || 'Role'}`}
+              </span>
+              <button className={s.modalClose} onClick={() => setModal(null)}><X size={18} /></button>
             </div>
+            <form onSubmit={handleSaveRoleModal}>
+              <div className={s.modalBody}>
+                <div className={s.form}>
+                  <div className={s.field}>
+                    <label className={s.label}>Role Name *</label>
+                    <input
+                      className={`${s.input} ${errors.name ? s.inputError : ''}`}
+                      placeholder="e.g. Quality Auditor"
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    />
+                    {errors.name && <span className={s.fieldError}>{errors.name}</span>}
+                  </div>
 
-            <form onSubmit={handleSaveRoleModal} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label className={s.label}>Role Name *</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Quality Auditor"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className={s.input}
-                  style={errors.name ? { borderColor: '#ef4444' } : {}}
-                />
-                {errors.name && <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.name}</span>}
+                  <div className={s.field}>
+                    <label className={s.label}>Description</label>
+                    <textarea
+                      placeholder="Brief summary of privileges..."
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      rows={3}
+                      className={s.textarea}
+                    />
+                  </div>
+                </div>
               </div>
-
-              <div>
-                <label className={s.label}>Description</label>
-                <textarea
-                  placeholder="Brief summary of privileges..."
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  rows={3}
-                  className={s.textarea}
-                />
-              </div>
-
-              <div className={s.modalActions} style={{ margin: '8px -24px -24px -24px', padding: '16px 24px', background: '#f8fcfe', borderTop: '1px solid #f1f5f9' }}>
-                <button type="button" onClick={() => setModal(null)} className={`${s.btn} ${s.btnSecondary}`}>
-                  Cancel
-                </button>
-                <button type="submit" disabled={saving} className={`${s.btn} ${s.btnPrimary}`}>
-                  {saving ? 'Saving...' : modal === 'create' ? 'Create Role' : 'Save Changes'}
+              <div className={s.modalFooter}>
+                <button type="button" className={`${s.btn} ${s.btnSecondary}`} onClick={() => setModal(null)}>Cancel</button>
+                <button type="submit" className={`${s.btn} ${s.btnPrimary}`} disabled={saving}>
+                  {saving ? 'Saving...' : modal === 'create' ? 'Save & Create Role' : 'Save Changes'}
                 </button>
               </div>
             </form>
